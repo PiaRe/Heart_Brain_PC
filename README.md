@@ -14,7 +14,7 @@ originate in the atrium (PAC) or the ventricle (PVC). Very little is known about
 how the brain responds to PCs. We analysed data from simultaneously recorded
 cardiac (electrocardiogram - ECG) and neural (electroencephalography - EEG)
 activity during 3065 PCs in 103 participants (51 with PAC, 52 with PVC) and
-a matched control group. The underlying code for analysing the data is in this repository. 
+a matched control group. This repository contains the underlying code for analysing this data. 
 
 ## Key methods
 
