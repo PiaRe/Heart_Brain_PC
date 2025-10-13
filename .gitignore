@@ -1,0 +1,59 @@
+# Project-specific directories
+final/
+**/final/
+
+# MATLAB specific
+*.asv
+*.m~
+*.mex*
+*.p
+*.slx.autosave
+
+# EEGLAB/EEG data files
+*.set
+*.fdt
+*.eeg
+*.vhdr
+*.vmrk
+*.bdf
+*.cnt
+
+# Large data files
+*.mat
+*.h5
+*.hdf5
+
+# Log files
+*.log
+Logfiles/
+**/Logfiles/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Output directories
+output/
+**/output/
+QA/
+**/QA/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*.backup
