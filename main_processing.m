@@ -61,6 +61,8 @@ addpath(genpath([code_path, 'functions/boundedline'])); % Bounded lines path
 basedir = [code_path, 'final/'];
 raw_path = [basedir, 'raw/']; % combined EEG + ECG data
 crop_marker_path = [basedir, 'raw/crop_marker/'];
+event_marker_path = [basedir, 'raw/event_marker/'];
+preprocessed_path = [basedir, 'preprocessed/'];
 pre_ica_path = [basedir, 'ICA/'];
 post_ica_path = [basedir, 'postICA/'];
 filtered_path = [basedir, 'postICA_05_20Hz/'];
@@ -91,7 +93,8 @@ lowpass_cu = 20;
 flatline_crit = 5; % in s
 % Threshold to exclude artefacts
 artefact_thresh = 80; % in mV
-
+% All heartbeats to consider for the analysis
+all_beats = {'N', 'iN', 'PVC+2', 'PAC-2', 'PAC+2', 'PVC-2', 'PVC-3', 'PAC-3', 'PAC-4', 'PVC-4', 'PAC+3', 'PVC+3'};
 %% ICA cleaning settings
 % Filtering for ICA decomposition, in Hz
 ica_highpass_cu = 1;
@@ -99,7 +102,7 @@ ica_lowpass_cu = lowpass_cu;
 % Notch filtering
 line_noise_f = 50; % line noise, in Hz
 % ICA and ECG epoching for ECG-related artifact detection, in s
-ica_window = [-0.050 0.600];
+ica_window = [-0.200 0.200];
 
 % SD threshold for ECG-related artifact detection
 sd_ecg_thresh = 1.5; % ica_thresh
@@ -137,16 +140,20 @@ ica_option = 'yes';
 
 %% Step 1: Initial preprocessing and ICA
 fprintf('Running step 1: Initial preprocessing and ICA\n');
-a_1_preprocessing(raw_path, crop_marker_path, pre_ica_path, error_path, fs, elecfile, ica_highpass_cu, ica_lowpass_cu, line_noise_f, flatline_crit, artefact_thresh)
+a_1_preprocessing(raw_path, crop_marker_path, preprocessed_path, error_path, fs, elecfile, ica_highpass_cu, ica_lowpass_cu, line_noise_f, flatline_crit, artefact_thresh)
+
+%% Step 1b: Import Events (timepoints of R-peaks)
+fprintf('Running step 1b: Importing ECG events and beats\n');
+a_1b_import_events(preprocessed_path, event_marker_path, pre_ica_path, error_path, all_beats)
 
 %% Step 2: Select ICA components
 fprintf('Running step 2: ICA component selection\n');
-a_2_select_ICA_components(pre_ica_path, post_ica_path, error_path, qa_path, ica_window, thresholds)
+a_2_select_ICA_components(pre_ica_path, post_ica_path, error_path, qa_path, ica_window, thresholds, all_beats)
 
-%% Step 3: Apply ICA to filtered data
-fprintf('Running step 3: Applying ICA to filtered data\n');
-a_3_apply_ICA_components_to_filtered_data(raw_path, filtered_path, pre_ica_path, post_ica_path, error_path, qa_path, fs, elecfile, highpass_cu, lowpass_cu, line_noise_f, flatline_crit)
+% %% Step 3: Apply ICA to filtered data
+% fprintf('Running step 3: Applying ICA to filtered data\n');
+% a_3_apply_ICA_components_to_filtered_data(raw_path, filtered_path, pre_ica_path, post_ica_path, error_path, qa_path, fs, elecfile, highpass_cu, lowpass_cu, line_noise_f, flatline_crit)
 
-%% Step 4: Run time domain analysis
-fprintf('Running step 4: Analysing the HEP in the time domain\n');
-a_4_run_timedomain(filtered_path, epoch_length, baseline_time, baseline_option, ica_option)
+% %% Step 4: Run time domain analysis
+% fprintf('Running step 4: Analysing the HEP in the time domain\n');
+% a_4_run_timedomain(filtered_path, epoch_length, baseline_time, baseline_option, ica_option)
