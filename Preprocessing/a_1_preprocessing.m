@@ -132,7 +132,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
             % EEG.icachansind = EEG_ica_result.icachansind;
 
             % save results
-            pop_saveset(EEG, 'filename', subjid, 'filepath', preprocessed_data_path);
+            pop_saveset(EEG, 'filename', subjid(1:12), 'filepath', preprocessed_data_path);
 
         catch ME
             % in case something goes wrong, save an error log

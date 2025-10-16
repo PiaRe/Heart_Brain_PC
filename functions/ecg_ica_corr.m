@@ -30,6 +30,7 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
 
     % Create a temporary EEG structure for ICA data
     EEGtemp = EEG;
+    EEG.icaact = (EEG.icaweights * EEG.icasphere) * EEG.data(EEG.icachansind, :);
     EEGtemp.data = EEG.icaact;
 
     % Check if the data is 2D or less
@@ -52,6 +53,8 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
 
         % Epoch EEG according to ECG marker
         EEG = pop_epoch(EEG, R_marker, time_window);
+        EEG.ECG.event = EEG.event;
+        EEG.ECG = pop_epoch(EEG.ECG, R_marker, time_window);
     end
 
     % Remove baseline from EEG data
@@ -64,7 +67,7 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
     if isempty(ECG_template)
 
         try
-            ECG_template = mean(EEG.data(strcmp({EEG.chanlocs.labels}, 'ECG'), :, :), 3);
+            ECG_template = mean(EEG.ECG.data, 3);
         catch
         end
 

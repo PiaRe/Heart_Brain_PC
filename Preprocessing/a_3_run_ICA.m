@@ -77,7 +77,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
             %% run ICA on epoched data
 
             % get rank of the ICA data
-            dataRank = sum(eig(cov(double(EEG_ICA.data'))) > 1E-7);
+            dataRank = sum(eig(cov(double(EEG.data'))) > 1E-7);
 
             % run extended infomax ICA
             EEG_ICA = pop_runica(EEG_ICA, 'icatype', 'runica', 'pca', dataRank, 'options', {'extended' 1});

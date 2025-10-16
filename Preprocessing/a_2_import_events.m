@@ -140,21 +140,21 @@ function a_1b_import_events(preprocessed_data_path, event_data_path, pre_ica_pat
                 EEG = pop_importevent(EEG, 'event', table2cell(eventBeat), 'fields', header, ...
                     'append', 'yes', 'align', NaN, 'timeunit', 1E-3);
 
-                % Add ECG channel back to EEG data
-                if isfield(EEG, 'ECG') && ~isempty(EEG.ECG)
-                    % Remove existing ECG channel if present
-                    ecg_idx = find(strcmp({EEG.chanlocs.labels}, 'ECG'));
+                % % Add ECG channel back to EEG data
+                % if isfield(EEG, 'ECG') && ~isempty(EEG.ECG)
+                %     % Remove existing ECG channel if present
+                %     ecg_idx = find(strcmp({EEG.chanlocs.labels}, 'ECG'));
 
-                    if ~isempty(ecg_idx)
-                        EEG = pop_select(EEG, 'nochannel', ecg_idx);
-                    end
+                %     if ~isempty(ecg_idx)
+                %         EEG = pop_select(EEG, 'nochannel', ecg_idx);
+                %     end
 
-                    % Add ECG data from stored ECG struct
-                    ECG_data = EEG.ECG.data(1, :);
-                    EEG.data(end + 1, :, :) = ECG_data;
-                    EEG.nbchan = size(EEG.data, 1);
-                    EEG.chanlocs(end + 1).labels = 'ECG';
-                end
+                %     % Add ECG data from stored ECG struct
+                %     ECG_data = EEG.ECG.data(1, :);
+                %     EEG.data(end + 1, :, :) = ECG_data;
+                %     EEG.nbchan = size(EEG.data, 1);
+                %     EEG.chanlocs(end + 1).labels = 'ECG';
+                % end
 
                 EEG = eeg_checkset(EEG);
 
