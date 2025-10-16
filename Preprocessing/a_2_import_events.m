@@ -1,4 +1,4 @@
-function a_1b_import_events(data_path, event_data_path, save_path, error_path, all_beats)
+function a_1b_import_events(preprocessed_data_path, event_data_path, pre_ica_path, error_log_path, analysis_beat_types, raw_file_labels)
     % A_1B_IMPORT_EVENTS - Import and process ECG event markers for premature beats
     %
     % This function imports ECG event markers from text files and processes them
@@ -12,28 +12,25 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
     % for premature beats and adds ECG channel back to the EEG data.
     %
     % Inputs:
-    %   data_path   - Path to directory containing EEG .set files (string)
-    %   event_data_path - Path to directory containing ECG event .txt files (string)
-    %   save_path     - Path to directory for saving processed files (string)
-    %   error_path     - Path to directory for saving error logs (string)
-    %   all_beats    - all heartbeats to consider for this analysis
+    %   preprocessed_data_path - Path to directory containing preprocessed EEG .set files (string)
+    %   event_data_path       - Path to directory containing ECG event .txt files (string)
+    %   pre_ica_path          - Path to directory for saving processed files (string)
+    %   error_log_path        - Path to directory for saving error logs (string)
+    %   analysis_beat_types   - Beat types to consider for this analysis
+    %   raw_file_labels       - Beat types as they appear in raw table
     %
     % Outputs:
-    %   - EEG files with imported and processed events saved to save_path
+    %   - EEG files with imported and processed events saved to pre_ica_path
     %   - counter_ES.mat file with statistics on detected events
     %   - Console output with processing status
-    %   - Error logs saved to error_path if processing fails
+    %   - Error logs saved to error_log_path if processing fails
     %
     % Author: Based on import_events_beats.m script
 
     fprintf('Starting ECG event import and processing...\n');
 
     % Initialize variables
-    EEGfiles = dir(fullfile(data_path, '*.set'));
-
-    % Define valid beat types
-    validBeats = {'N'; 'S'; 'V'; 'badECG'}; % S=PAC, V=PVC (original labels from table)
-    
+    EEGfiles = dir(fullfile(preprocessed_data_path, '*.set'));
 
     %% Process each EEG file
     for i = 1:length(EEGfiles)
@@ -42,7 +39,7 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
 
         try
             % Load EEG data
-            EEG = pop_loadset('filename', EEGfiles(i).name, 'filepath', data_path);
+            EEG = pop_loadset('filename', EEGfiles(i).name, 'filepath', preprocessed_data_path);
             fileName = EEGfiles(i).name(1:12);
 
             % Clear existing events
@@ -68,7 +65,7 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
                 % Mark invalid beats as badECG
                 for j = 2:size(eventBeat.type, 1) - 2
 
-                    if ~any(strcmp(eventBeat{j, 'type'}, validBeats))
+                    if ~any(strcmp(eventBeat{j, 'type'}, raw_file_labels))
                         eventBeat{j - 1:j + 2, 'type'} = {'badECG'};
                     end
 
@@ -81,7 +78,7 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
 
                         if any(eventBeat{j, 'latency'} >= (EEG.rejData(:, 1) - 1) * 2 & ...
                                 eventBeat{j, 'latency'} <= (EEG.rejData(:, 2) - 1) * 2) && ...
-                                any(strcmp(eventBeat{j, 'type'}, validBeats))
+                                any(strcmp(eventBeat{j, 'type'}, raw_file_labels))
                             eventBeat{j, 'type'} = {'badECG'};
                         end
 
@@ -130,7 +127,7 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
 
                 % Find isolated normal heartbeats
                 for j = 5:size(eventBeat.type, 1) - 5
-                    l = cellfun(@(c)strcmp(c, eventBeat{j - 4:j + 5, 'type'}), all_beats, 'UniformOutput', false);
+                    l = cellfun(@(c)strcmp(c, eventBeat{j - 4:j + 5, 'type'}), analysis_beat_types, 'UniformOutput', false);
                     k = cellfun(@(c)strcmp(c, eventBeat{j, 'type'}), {'N'}, 'UniformOutput', false);
 
                     if all(sum(cell2mat(l), 2) >= 1) && all(sum(cell2mat(k), 2) >= 1)
@@ -143,26 +140,26 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
                 EEG = pop_importevent(EEG, 'event', table2cell(eventBeat), 'fields', header, ...
                     'append', 'yes', 'align', NaN, 'timeunit', 1E-3);
 
-                % % Add ECG channel back to EEG data
-                % if isfield(EEG, 'ECG') && ~isempty(EEG.ECG)
-                %     % Remove existing ECG channel if present
-                %     ecg_idx = find(strcmp({EEG.chanlocs.labels}, 'ECG'));
+                % Add ECG channel back to EEG data
+                if isfield(EEG, 'ECG') && ~isempty(EEG.ECG)
+                    % Remove existing ECG channel if present
+                    ecg_idx = find(strcmp({EEG.chanlocs.labels}, 'ECG'));
 
-                %     if ~isempty(ecg_idx)
-                %         EEG = pop_select(EEG, 'nochannel', ecg_idx);
-                %     end
+                    if ~isempty(ecg_idx)
+                        EEG = pop_select(EEG, 'nochannel', ecg_idx);
+                    end
 
-                %     % Add ECG data from stored ECG struct
-                %     ECG_data = EEG.ECG.data(1, :);
-                %     EEG.data(end + 1, :, :) = ECG_data;
-                %     EEG.nbchan = size(EEG.data, 1);
-                %     EEG.chanlocs(end + 1).labels = 'ECG';
-                % end
+                    % Add ECG data from stored ECG struct
+                    ECG_data = EEG.ECG.data(1, :);
+                    EEG.data(end + 1, :, :) = ECG_data;
+                    EEG.nbchan = size(EEG.data, 1);
+                    EEG.chanlocs(end + 1).labels = 'ECG';
+                end
 
                 EEG = eeg_checkset(EEG);
 
                 % Save processed EEG file
-                pop_saveset(EEG, 'filename', [fileName '.set'], 'filepath', save_path);
+                pop_saveset(EEG, 'filename', [fileName '.set'], 'filepath', pre_ica_path);
 
             else
                 % Event file not found
@@ -171,7 +168,7 @@ function a_1b_import_events(data_path, event_data_path, save_path, error_path, a
 
         catch ME
             % in case something goes wrong, save an error log
-            fileID = fopen(fullfile(error_path, [fileName, '_error_log.txt']), 'w');
+            fileID = fopen(fullfile(error_log_path, [fileName, '_error_log.txt']), 'w');
             fprintf(fileID, '%s\n', fileName);
             fprintf(fileID, '%s\n', getReport(ME));
             fclose(fileID);

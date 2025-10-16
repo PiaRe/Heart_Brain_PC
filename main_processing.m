@@ -40,120 +40,67 @@
 %% Initialize workspace
 clc; clear all; close all; % Clear command window, variables, and figures.
 
-%% Initialize paths
-% Base paths
-eeglab_path = '/data/pt_02584/Patty/Toolboxes/eeglab2021.1/'; % TODO: remove
-code_path = '/data/pt_02778/HEP_ES/Heart_Brain_PC/'; % TODO: remove
+%% Initialize configuration
+% Load centralized configuration
+config = setup_project_config();
 
 % Add required paths
-addpath(eeglab_path);
-addpath([code_path, 'functions']);
-addpath([code_path, 'Preprocessing/']);
-addpath([code_path, 'Stats/Timedomain/']);
-addpath([code_path, 'Stats/SourceSpace/']);
-addpath([code_path, 'Stats/ControlAnalysis/']);
+addpath(config.paths.eeglab);
+addpath([config.paths.base_code, 'functions']);
+addpath([config.paths.base_code, 'Preprocessing/']);
+addpath([config.paths.base_code, 'Stats/Timedomain/']);
+addpath([config.paths.base_code, 'Stats/SourceSpace/']);
+addpath([config.paths.base_code, 'Stats/ControlAnalysis/']);
 
-addpath('/HEPLAB-master/HEPLAB-master/Functions'); % HEPLAB path
-addpath('/fieldtrip-20230822/'); % Fieldtrip path
-addpath(genpath([code_path, 'functions/boundedline'])); % Bounded lines path
-
-% Project paths
-basedir = [code_path, 'final/'];
-raw_path = [basedir, 'raw/']; % combined EEG + ECG data
-crop_marker_path = [basedir, 'raw/crop_marker/'];
-event_marker_path = [basedir, 'raw/event_marker/'];
-preprocessed_path = [basedir, 'preprocessed/'];
-pre_ica_path = [basedir, 'ICA/'];
-post_ica_path = [basedir, 'postICA/'];
-filtered_path = [basedir, 'postICA_05_20Hz/'];
-epochs_path = [basedir, 'epochs/'];
-output_path = [basedir, 'output/'];
-qa_path = [basedir, 'QA/'];
-error_path = [basedir, 'Logfiles/'];
-settings_path = [code_path, 'settings/'];
+addpath(config.paths.heplab);
+addpath(config.paths.fieldtrip);
+addpath(genpath(config.paths.boundedline));
 
 % Create all task directories
-dirs_to_create = {pre_ica_path, post_ica_path, filtered_path, ...
-                      epochs_path, output_path, qa_path, error_path};
+dirs_to_create = {config.paths.no_ica_path, config.paths.pre_ica_path, ...
+                      config.paths.post_ica_path, config.paths.epochs_path, ...
+                      config.paths.output_path, config.paths.qa_path, config.paths.error_log_path};
 create_dirs(dirs_to_create);
 
 % Initialize EEGLAB
 eeglab; close;
 
-%% Preprocessing settings
-% Down-sampling frequency in Hz
-fs = 500;
-
-% Location of standard electrode positions
-elecfile = [eeglab_path, '/plugins/dipfit/standard_BESA/standard-10-5-cap385.elp'];
-% High- and Low-pass filtering cutoffs, in Hz
-highpass_cu = 0.5;
-lowpass_cu = 20;
-% Criterion for cleaning flat channel
-flatline_crit = 5; % in s
-% Threshold to exclude artefacts
-artefact_thresh = 80; % in mV
-% All heartbeats to consider for the analysis
-all_beats = {'N', 'iN', 'PVC+2', 'PAC-2', 'PAC+2', 'PVC-2', 'PVC-3', 'PAC-3', 'PAC-4', 'PVC-4', 'PAC+3', 'PVC+3'};
-%% ICA cleaning settings
-% Filtering for ICA decomposition, in Hz
-ica_highpass_cu = 1;
-ica_lowpass_cu = lowpass_cu;
-% Notch filtering
-line_noise_f = 50; % line noise, in Hz
-% ICA and ECG epoching for ECG-related artifact detection, in s
-ica_window = [-0.200 0.200];
-
-% SD threshold for ECG-related artifact detection
-sd_ecg_thresh = 1.5; % ica_thresh
-% threshold for correlation between ECG and ICA components
-ecg_tresh = 0.8;
-% threshold probability for IClabeling - muscle
-muscle_thresh = 0.5;
-% threshold probability for IClabeling - eye
-eye_thresh = 0.6;
-% threshold probability for IClabeling - line noise
-ln_thresh = 0.5;
-% threshold probability for IClabeling - channel noise
-chann_thresh = 0.4;
-% threshold probability for IClabeling - other
-other_thresh = 0.5;
-
-% Create a dictionary using containers.Map
-thresholds = containers.Map( ...
-    {'sd_ecg', 'ecg', 'muscle', 'eye', ...
-     'ln', 'chann', 'other'}, ...
-    {sd_ecg_thresh, ecg_tresh, muscle_thresh, eye_thresh, ...
-     ln_thresh, chann_thresh, other_thresh});
-
-%% Time domain settings
-% timewindow of HEP epochs with the R-peak at 0 ms
-epoch_length = [-200, 800]; % in ms
-% timewindow of basline before HEP
-basline_time = [-150, -50]; % in ms
-%% Multiverse Setting - time domain
-% baseline setting: choose between 'no': no baseline applied, 'ref': baseline before reference
-% condition and 'int': baseline before condition of interest
-baseline_option = 'ref';
-% ICA setting: choose between 'no': no ICA components rejected and 'yes': ICA components rejected
-ica_option = 'yes';
-
 %% Step 1: Initial preprocessing and ICA
-fprintf('Running step 1: Initial preprocessing and ICA\n');
-a_1_preprocessing(raw_path, crop_marker_path, preprocessed_path, error_path, fs, elecfile, ica_highpass_cu, ica_lowpass_cu, line_noise_f, flatline_crit, artefact_thresh)
+% fprintf('Running step 1a: Initial preprocessing of data for ICA\n');
+% a_1_preprocessing(config.paths.raw_data, config.paths.crop_marker_path, ...
+%     config.paths.pre_ica_path, config.paths.error_log_path, ...
+%     config.processing.sampling_rate, config.electrodes.file, ...
+%     config.processing.ica_highpass_cutoff, config.processing.ica_lowpass_cutoff, ...
+%     config.processing.line_noise_frequency, config.processing.flatline_criterion, ...
+%     config.processing.artifact_threshold)
 
-%% Step 1b: Import Events (timepoints of R-peaks)
-fprintf('Running step 1b: Importing ECG events and beats\n');
-a_1b_import_events(preprocessed_path, event_marker_path, pre_ica_path, error_path, all_beats)
+% fprintf('Running step 1b: Initial preprocessing of analysis data\n');
+% a_1_preprocessing(config.paths.raw_data, config.paths.crop_marker_path, ...
+%     config.paths.no_ica_path, config.paths.error_log_path, ...
+%     config.processing.sampling_rate, config.electrodes.file, ...
+%     config.processing.highpass_cutoff, config.processing.lowpass_cutoff, ...
+%     config.processing.line_noise_frequency, config.processing.flatline_criterion, ...
+%     config.processing.artifact_threshold)
 
-%% Step 2: Select ICA components
-fprintf('Running step 2: ICA component selection\n');
-a_2_select_ICA_components(pre_ica_path, post_ica_path, error_path, qa_path, ica_window, thresholds, all_beats)
+%% Step 2: Import events (timepoints of R-peaks)
+% fprintf('Running step 2a: Importing ECG events and beats for ICA data\n');
+% a_2_import_events(config.paths.pre_ica_path, config.paths.event_data, ...
+%     config.paths.pre_ica_path, config.paths.error_log_path, ...
+%     config.beat_types.analysis_labels, config.beat_types.raw_file_labels)
 
-% %% Step 3: Apply ICA to filtered data
-% fprintf('Running step 3: Applying ICA to filtered data\n');
-% a_3_apply_ICA_components_to_filtered_data(raw_path, filtered_path, pre_ica_path, post_ica_path, error_path, qa_path, fs, elecfile, highpass_cu, lowpass_cu, line_noise_f, flatline_crit)
+% fprintf('Running step 2b: Importing ECG events and beats for analysis data\n');
+% a_2_import_events(config.paths.no_ica_path, config.paths.event_data, ...
+%     config.paths.no_ica_path, config.paths.error_log_path, ...
+%     config.beat_types.analysis_labels, config.beat_types.raw_file_labels)
 
-% %% Step 4: Run time domain analysis
+%% Step 3: Run ICA and remove artifactual components
+fprintf('Running step 3: Running ICA and removing components\n');
+a_3_run_ICA(config.paths.no_ica_path, config.paths.pre_ica_path, config.paths.post_ica_path, ...
+    config.paths.error_log_path, config.paths.qa_path, ...
+    config.ica.analysis_window, config.thresholds, ...
+    config.beat_types.analysis_labels)
+
+%% Step 4: Run time domain analysis
 % fprintf('Running step 4: Analysing the HEP in the time domain\n');
-% a_4_run_timedomain(filtered_path, epoch_length, baseline_time, baseline_option, ica_option)
+% a_4_run_timedomain(config.paths.filtered_data_path, config.hep.epoch_length, ...
+%                    config.hep.baseline_time, config.hep.baseline_option, config.hep.ica_option)

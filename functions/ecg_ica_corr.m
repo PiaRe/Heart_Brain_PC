@@ -38,18 +38,20 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
         add_chans = size(EEG.data, 1) -size(EEGtemp.data, 1);
 
         % exchange EEG data with ICA data for easier epoching
-        if size(EEGtemp.data, 1) ~= size(EEG.data, 1)
+        if size(EEGtemp.data, 1) ~= size(EEG.data, 1) && add_chans > 0
             EEGtemp.data = [EEGtemp.data; zeros(add_chans, length(EEGtemp.data))];
         end
 
         % Epoch ICA data based on R-peak markers
         EEGtemp = pop_epoch(EEGtemp, R_marker, time_window);
 
-        % Remove the added channels
-        EEGtemp.data(end - add_chans:end, :, :) = [];
+        % Remove the added channels (only if they were actually added)
+        if add_chans > 0
+            EEGtemp.data(end - add_chans + 1:end, :, :) = [];
+        end
 
         % Epoch EEG according to ECG marker
-        EEG = pop_epoch(EEG, {R_marker}, time_window);
+        EEG = pop_epoch(EEG, R_marker, time_window);
     end
 
     % Remove baseline from EEG data
