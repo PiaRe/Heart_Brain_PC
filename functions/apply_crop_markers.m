@@ -43,7 +43,7 @@ function EEG = apply_crop_markers(EEG, crop_file_path, error_path, subjid)
             else
                 % Log missing start marker
                 fileID = fopen(fullfile(error_path, 'no_start_marker.txt'), 'a+');
-                fprintf(fileID, '\n%s %s\n', datestr(datetime), subjid);
+                fprintf(fileID, '\n%s %s\n', char(datetime('now')), subjid);
                 fclose(fileID);
             end
 
@@ -52,7 +52,7 @@ function EEG = apply_crop_markers(EEG, crop_file_path, error_path, subjid)
     catch ME
         % Log crop marker error
         fileID = fopen(fullfile(error_path, 'crop_marker_error.txt'), 'a+');
-        fprintf(fileID, '\n%s %s %s\n', datestr(datetime), subjid, ME.message);
+        fprintf(fileID, '\n%s %s %s\n', char(datetime('now')), subjid, ME.message);
         fclose(fileID);
     end
 

@@ -84,7 +84,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
             EEG.ECG = pop_select(EEG, 'channel', {'EKG'});
             EEG.VEOG = pop_select(EEG, 'channel', {'VEOG'});
             EEG.HEOG = pop_select(EEG, 'channel', {'HEOG'});
-            EEG = pop_select(EEG, 'channel', [1:31]);
+            EEG = pop_select(EEG, 'channel', 1:31);
 
             % keep backup for channel interpolation
             originalEEG = EEG;

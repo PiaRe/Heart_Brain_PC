@@ -35,7 +35,7 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
     % Check if the data is 2D or less
     if ndims(EEGtemp.data) <= 2
         % Calculate the number of additional channels needed
-        add_chans = size(EEG.data, 1) -size(EEGtemp.data, 1);
+        add_chans = size(EEG.data, 1) - size(EEGtemp.data, 1);
 
         % exchange EEG data with ICA data for easier epoching
         if size(EEGtemp.data, 1) ~= size(EEG.data, 1) && add_chans > 0

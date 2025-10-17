@@ -55,14 +55,14 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
         try
             subjid = files(i).name(1:end - 4);
 
-            % % if subject exists, skip
-            % if any(strcmp(savefilesnames, [subjid, '.set']))
-            %     continue
-            % end
+            % if subject exists, skip
+            if any(strcmp(savefilesnames, [subjid, '.set']))
+                continue
+            end
 
             % create QA folders
-            if not(isfolder([qa_path, subjid]))
-                mkdir([qa_path, subjid])
+            if ~isfolder([qa_path, subjid])
+                mkdir([qa_path, subjid]);
             end
 
             % load data
@@ -147,7 +147,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
             saveas(gcf, [qa_path, subjid, '/', subjid, '_removed_components.png'], 'png');
 
             % plot all components
-            pop_topoplot(EEG, 0, [1:size(EEG.icaact, 1)], subjid, [], 0, 'electrodes', 'on', 'iclabel', 'on');
+            pop_topoplot(EEG, 0, 1:size(EEG.icaact, 1), subjid, [], 0, 'electrodes', 'on', 'iclabel', 'on');
             saveas(gcf, [qa_path, subjid, '/', subjid, '_all_components.png'], 'png');
 
             % plot artefact components that have high probability to be brain activity
@@ -160,7 +160,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
 
             % if Loop completed and previously a error log was created, delete the error log
             if isfile([error_log_path, subjid, '_error_log_ICA_comp_select.txt'])
-                delete([error_log_path, subjid, '_error_log_ICA_comp_select.txt'])
+                delete([error_log_path, subjid, '_error_log_ICA_comp_select.txt']);
             end
 
             close all;

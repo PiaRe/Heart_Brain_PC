@@ -45,7 +45,9 @@ AUTHOR: Jes�s Monge �lvarez
     %For each frequency band considered:
     for i = 1:num_bands
         %The positive indexes in the frequency band are looked for:
-        ind_frequency_band = min(find(f >= frequency_band(i, 1))):max(find(f <= frequency_band(i, 2)));
+        idx_low = find(f >= frequency_band(i, 1), 1, 'first');
+        idx_high = find(f <= frequency_band(i, 2), 1, 'last');
+        ind_frequency_band = idx_low:idx_high;
         %We compute the absolute power in the frequency band considered:
         RelativePower(i) = sum(PSD(ind_frequency_band));
     end

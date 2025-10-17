@@ -1,13 +1,13 @@
 %% Modified from trimOutlier() %%
 
-function [EEG rejectDataIntervals] = trimOutlier_adjust(EEG, amplitudeThreshold, amplitudeThreshold_hf, pointSpreadWidth)
+function [EEG, rejectDataIntervals] = trimOutlier_adjust(EEG, amplitudeThreshold_hf, pointSpreadWidth)
 
     if ~(nargin == 4)
         error('trimOutlier() requires 4 input arguments.')
     end
 
     % return if 3-D
-    if length(size(EEG.data)) == 3
+    if ndims(EEG.data) == 3
         disp('Epoched data detected: datapoint rejection will not be performed.')
         return
     end
@@ -65,7 +65,7 @@ function [EEG rejectDataIntervals] = trimOutlier_adjust(EEG, amplitudeThreshold,
         rejectDataIntervals_hf(:, 2) = rejectDataIntervals_hf(:, 2) - 1;
 
         for n = 1:size(rejectDataIntervals_hf, 1)
-            l = size(rejectDataIntervals, 1) +1;
+            l = size(rejectDataIntervals, 1) + 1;
             rejectDataIntervals(l, :) = rejectDataIntervals_hf(n, :);
         end
 
@@ -156,7 +156,7 @@ function [EEG rejectDataIntervals] = trimOutlier_adjust(EEG, amplitudeThreshold,
 
         % display log
         badPointsInSec = length(find(badPointsExpanded)) * 1000 / EEG.srate / 1000; %#ok<*NASGU>
-        disp(sprintf('\n%2.0fuV threshold with %2.0fms spreading rejected %2.1fsec data, added %1.0f boundaries.', amplitudeThreshold, windowSize, badPointsInSec, size(rejectDataIntervals, 1)));
+        fprintf('\n%2.0fuV threshold with %2.0fms spreading rejected %2.1fsec data, added %1.0f boundaries.\n', amplitudeThreshold, windowSize, badPointsInSec, size(rejectDataIntervals, 1));
     else
         disp('No datapoint rejected.');
         rejectDataIntervals(1, 1) = 1;

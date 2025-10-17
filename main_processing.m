@@ -38,7 +38,7 @@
 %     3. Perform statistical analysis.
 
 %% Initialize workspace
-clc; clear all; close all; % Clear command window, variables, and figures.
+clc; clear; close all; % Clear command window, variables, and figures.
 
 %% Initialize configuration
 % Load centralized configuration

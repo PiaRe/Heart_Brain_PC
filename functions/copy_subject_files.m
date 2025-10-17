@@ -24,7 +24,9 @@ searchDirs = {
 markerDir = '/data/pt_02584/Patty/premature_beats/eeg_marker_files/';
 
 % Log file for errors and status
-logFile = '/data/pt_02778/HEP_ES/Heart_Brain_PC/final/Logfiles/copy_files_log.txt'; % % Read CSV file
+logFile = '/data/pt_02778/HEP_ES/Heart_Brain_PC/final/Logfiles/copy_files_log.txt';
+
+%% Read CSV file
 fprintf('Reading subject list from CSV file...\n');
 
 try
@@ -67,7 +69,7 @@ fprintf('Extracted %d valid subject IDs.\n', length(subjectIDs));
 
 %% Initialize logging
 fileID = fopen(logFile, 'w');
-fprintf(fileID, 'File copy log - %s\n', datestr(now));
+fprintf(fileID, 'File copy log - %s\n', char(datetime('now')));
 fprintf(fileID, '================================\n\n');
 
 %% Search and copy files
@@ -164,10 +166,8 @@ for i = 1:length(subjectIDs)
             markerTargetFileName = markerFiles(1).name; % Keep original name if group unknown
         end
 
-        markerTargetFile = fullfile(markerTargetDir, markerTargetFileName);
-
         try
-            copyfile(markerSourceFile, markerTargetFile);
+            copyfile(markerSourceFile, fullfile(markerTargetDir, markerTargetFileName));
             fprintf(fileID, 'SUCCESS MARKER: %s -> %s\n', subjID, markerTargetFileName);
             markerFound = true;
             markersCopied = markersCopied + 1;

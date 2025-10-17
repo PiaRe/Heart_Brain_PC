@@ -1,5 +1,5 @@
 function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path, error_log_path, analysis_beat_types, raw_file_labels)
-    % A_1B_IMPORT_EVENTS - Import and process ECG event markers for premature beats
+    % A_2_IMPORT_EVENTS - Import and process ECG event markers for premature beats
     %
     % This function imports ECG event markers from text files and processes them
     % to identify and classify different types of heartbeats including:

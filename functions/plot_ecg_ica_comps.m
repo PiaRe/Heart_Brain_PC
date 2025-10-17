@@ -17,8 +17,8 @@ function plot_ecg_ica_comps(EEG, rejV, cV, img_save_path, subjid)
 
     %plot components
     cmpIdx = find(rejV);
-    cmpPosi = [1:2:sum(rejV) + 15]; %Positions of the Topoplots
-    timePosi = [2:2:sum(rejV) + 16]; %Positions of the ERP
+    cmpPosi = 1:2:sum(rejV) + 15; %Positions of the Topoplots
+    timePosi = 2:2:sum(rejV) + 16; %Positions of the ERP
 
     for nplt = 1:sum(rejV)
 
@@ -30,9 +30,9 @@ function plot_ecg_ica_comps(EEG, rejV, cV, img_save_path, subjid)
         %Plot ERP & single trials
         subplot(cmp_to_plot, 2, timePosi(nplt));
         icaacttmp = eeg_getdatact(EEG, 'component', cmpIdx(nplt));
-        offset = nan_mean(icaacttmp(:));
-        era = nan_mean(squeeze(icaacttmp)') - offset;
-        era_limits = get_era_limits(era);
+        offset = nanmean(icaacttmp(:));
+        era = nanmean(squeeze(icaacttmp)') - offset;
+        era_limits = [min(era) max(era)];
         erpimage(icaacttmp - offset, ones(1, EEG.trials) * 10000, EEG.times * 1000, ...
             '', 3, 1, 'caxis', 2/3, 'cbar', 'erp', 'yerplabel', '', 'erp_vltg_ticks', era_limits);
     end
