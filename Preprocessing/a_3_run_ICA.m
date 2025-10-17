@@ -40,7 +40,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
     %   - Processing summary statistics
     %   - Error logs in error_log_path (if errors occur)
     %
-    % Author: Paul Steinfath
+    % Author: Paul Steinfath, Pia Reinfeld
 
     %% get file names
     files = dir(fullfile(pre_ica_path, '*.set'));
@@ -55,10 +55,10 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
         try
             subjid = files(i).name(1:end - 4);
 
-            % if subject exists, skip
-            if any(strcmp(savefilesnames, [subjid, '.set']))
-                continue
-            end
+            % % if subject exists, skip
+            % if any(strcmp(savefilesnames, [subjid, '.set']))
+            %     continue
+            % end
 
             % create QA folders
             if not(isfolder([qa_path, subjid]))
@@ -81,6 +81,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
 
             % run extended infomax ICA
             EEG_ICA = pop_runica(EEG_ICA, 'icatype', 'runica', 'pca', dataRank, 'options', {'extended' 1});
+            EEG_ICA.icaact = (EEG_ICA.icaweights * EEG_ICA.icasphere) * EEG_ICA.data(EEG_ICA.icachansind, :);
 
             %% select ICA components
 
@@ -94,7 +95,15 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
             % run IClabel for classification of components on continuous data
             EEG_ICA = pop_iclabel(EEG_ICA, 'default');
 
-            %% Merge ICA components from epochend and continous data, vorher iclabel auf cont laufen lassen, noise comp finden mit threshold für nicht heart,dann epoched laufen lassen, heart componentnen finden für epoched, rüberkopieren auf continous daten dann rejecten
+            %% Copy ICA components from epochend to continous data
+
+            EEG.icawinv = EEG_ICA.icawinv;
+            EEG.icasphere = EEG_ICA.icasphere;
+            EEG.icaweights = EEG_ICA.icaweights;
+            EEG.icachansind = EEG_ICA.icachansind;
+            EEG.etc = EEG_ICA.etc;
+            eeg_checkset(EEG);
+            EEG.icaact = (EEG.icaweights * EEG.icasphere) * EEG.data(EEG.icachansind, :);
 
             %% Heart Components
             % Use correlation + ICLabel to find components
@@ -138,7 +147,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
             saveas(gcf, [qa_path, subjid, '/', subjid, '_removed_components.png'], 'png');
 
             % plot all components
-            pop_topoplot(EEG, 0, [1:size(EEG.icaact)], subjid, [], 0, 'electrodes', 'on', 'iclabel', 'on');
+            pop_topoplot(EEG, 0, [1:size(EEG.icaact, 1)], subjid, [], 0, 'electrodes', 'on', 'iclabel', 'on');
             saveas(gcf, [qa_path, subjid, '/', subjid, '_all_components.png'], 'png');
 
             % plot artefact components that have high probability to be brain activity
@@ -153,6 +162,8 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
             if isfile([error_log_path, subjid, '_error_log_ICA_comp_select.txt'])
                 delete([error_log_path, subjid, '_error_log_ICA_comp_select.txt'])
             end
+
+            close all;
 
         catch ME
 

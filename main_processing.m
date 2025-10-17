@@ -29,7 +29,7 @@
 %   - Statistical results.
 %
 % Author:
-%   Pia Reinfeld
+%   Pia Reinfeld, Paul Steinfath
 %
 % Example:
 %   Run the script to process task and rest EEG data:

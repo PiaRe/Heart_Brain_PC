@@ -1,4 +1,4 @@
-function a_1b_import_events(preprocessed_data_path, event_data_path, pre_ica_path, error_log_path, analysis_beat_types, raw_file_labels)
+function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path, error_log_path, analysis_beat_types, raw_file_labels)
     % A_1B_IMPORT_EVENTS - Import and process ECG event markers for premature beats
     %
     % This function imports ECG event markers from text files and processes them
@@ -25,7 +25,7 @@ function a_1b_import_events(preprocessed_data_path, event_data_path, pre_ica_pat
     %   - Console output with processing status
     %   - Error logs saved to error_log_path if processing fails
     %
-    % Author: Based on import_events_beats.m script
+    % Author: Pia Reinfeld
 
     fprintf('Starting ECG event import and processing...\n');
 

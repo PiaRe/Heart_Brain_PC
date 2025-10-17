@@ -21,7 +21,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
     %   flatline_criterion    - Criterion for detecting flatline channels (double)
     %   artifact_threshold    - Threshold to exclude artifacts (double)
     %
-    % Author: Pia Reinfeld
+    % Author: Pia Reinfeld, Paul Steinfath
 
     fprintf('Starting initial preprocessing...\n');
 

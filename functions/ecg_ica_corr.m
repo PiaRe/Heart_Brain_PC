@@ -30,7 +30,6 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
 
     % Create a temporary EEG structure for ICA data
     EEGtemp = EEG;
-    EEG.icaact = (EEG.icaweights * EEG.icasphere) * EEG.data(EEG.icachansind, :);
     EEGtemp.data = EEG.icaact;
 
     % Check if the data is 2D or less
@@ -91,7 +90,7 @@ function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker
         for k = 1:sum(rejV)
 
             comp = comps(k);
-            alpha_rel_pow = Compute_RP(EEGtemp.data(comp, :), 500, [1, 45], [7 15]);
+            alpha_rel_pow = compute_RP(EEGtemp.data(comp, :), 500, [1, 45], [7 15]);
 
             % if peak greater than 50% - keep the component
             if alpha_rel_pow > 0.5
