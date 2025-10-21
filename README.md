@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![MATLAB](https://img.shields.io/badge/MATLAB-R2020a+-orange.svg)](https://www.mathworks.com/products/matlab.html)
 
-The repository contains the code that accompanies this puplication: [![DOI](https://img.shields.io/badge/DOI-10.1162%2FIMAG.a.30-blue)](https://www.biorxiv.org/content/10.1101/2024.09.06.610728v1)
+The repository contains the code that accompanies this publication: [![DOI](https://img.shields.io/badge/DOI-10.1162%2FIMAG.a.30-blue)](https://www.biorxiv.org/content/10.1101/2024.09.06.610728v1)
 
 ## Overview
 
