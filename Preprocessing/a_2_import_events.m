@@ -33,7 +33,7 @@ function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path
     EEGfiles = dir(fullfile(preprocessed_data_path, '*.set'));
 
     %% Process each EEG file
-    for i = 1:length(EEGfiles)
+    parfor i = 1:length(EEGfiles)
 
         fprintf('Processing file %d/%d: %s\n', i, length(EEGfiles), EEGfiles(i).name);
 
@@ -125,13 +125,33 @@ function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path
 
                 end
 
-                % Find isolated normal heartbeats
+                % Find isolated normal heartbeats AFTER PAC/PVC detection
                 for j = 5:size(eventBeat.type, 1) - 5
-                    l = cellfun(@(c)strcmp(c, eventBeat{j - 4:j + 5, 'type'}), analysis_beat_types, 'UniformOutput', false);
-                    k = cellfun(@(c)strcmp(c, eventBeat{j, 'type'}), {'N'}, 'UniformOutput', false);
+                    % Check if current beat is still 'N' (not changed by PAC/PVC detection)
+                    if strcmp(eventBeat{j, 'type'}, 'N')
 
-                    if all(sum(cell2mat(l), 2) >= 1) && all(sum(cell2mat(k), 2) >= 1)
-                        eventBeat{j, 'type'} = {'iN'};
+                        % Check if all surrounding beats (j-4 to j+4, excluding current) are 'N' or 'iN'
+                        all_surrounding_normal = true;
+
+                        for k = -4:4
+
+                            if k ~= 0 % Skip current beat
+                                beat_type = eventBeat{j + k, 'type'};
+
+                                if ~strcmp(beat_type, 'N') && ~strcmp(beat_type, 'iN')
+                                    all_surrounding_normal = false;
+                                    break;
+                                end
+
+                            end
+
+                        end
+
+                        % If all surrounding beats are normal beats (N or iN), mark current beat as iN
+                        if all_surrounding_normal
+                            eventBeat{j, 'type'} = {'iN'};
+                        end
+
                     end
 
                 end

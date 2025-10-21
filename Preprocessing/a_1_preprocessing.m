@@ -26,10 +26,10 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
     fprintf('Starting initial preprocessing...\n');
 
     %% get files
-    files = dir(fullfile(raw_data_path, '*.vhdr'));
+    files = find_files_by_extension(raw_data_path, '*.vhdr');
 
     %% get (if any) already preprocessed filenames
-    prepFiles = dir(fullfile(preprocessed_data_path, '*.set'));
+    prepFiles = find_files_by_extension(preprocessed_data_path, '*.set');
     prepFileList = {prepFiles.name};
 
     %% preprocess data and save as set
@@ -38,7 +38,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
         try
 
             % subject ID and name for saving
-            subjid = files(i).name(1:end - 5);
+            subjid = extract_subject_id(files(i).name, '.vhdr');
             newID = [subjid '.set'];
 
             % if subject is already in prep - folder, skip it
@@ -50,7 +50,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
             [EEG, com] = pop_loadbv(raw_data_path, files(i).name);
 
             % keep subjid stored in EEG struct
-            EEG.setname = files(i).name(1:end - 5);
+            EEG.setname = subjid;
 
             % add montage EEG electrodes
             EEG = pop_chanedit(EEG, 'lookup', electrode_file);
@@ -132,7 +132,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
             % EEG.icachansind = EEG_ica_result.icachansind;
 
             % save results
-            pop_saveset(EEG, 'filename', subjid(1:12), 'filepath', preprocessed_data_path);
+            pop_saveset(EEG, 'filename', subjid(1:12), 'filepath', preprocessed_data_path); % TODO:change
 
         catch ME
             % in case something goes wrong, save an error log

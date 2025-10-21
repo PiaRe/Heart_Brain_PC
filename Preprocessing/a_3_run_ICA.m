@@ -43,17 +43,17 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
     % Author: Paul Steinfath, Pia Reinfeld
 
     %% get file names
-    files = dir(fullfile(pre_ica_path, '*.set'));
+    files = find_files_by_extension(pre_ica_path, '*.set');
 
     %% get already processed data
-    savefiles = dir(fullfile(post_ica_path, '*.set'));
+    savefiles = find_files_by_extension(post_ica_path, '*.set');
     savefilesnames = {savefiles.name};
 
     %% Loop over subjects
     parfor i = 1:length(files)
 
         try
-            subjid = files(i).name(1:end - 4);
+            subjid = extract_subject_id(files(i).name);
 
             % if subject exists, skip
             if any(strcmp(savefilesnames, [subjid, '.set']))

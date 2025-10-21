@@ -15,8 +15,8 @@ markerTargetDir = '/data/pt_02778/HEP_ES/Heart_Brain_PC/final/raw/crop_marker/';
 
 % Search directories for EEG files
 searchDirs = {
-              '/data/pt_02035/Data/eeg_data/ruhe/',
-              '/data/p_02035/Missing_files/fehlende_Daten/',
+              '/data/pt_02035/Data/eeg_data/ruhe/'; % replaced , with ;
+              '/data/p_02035/Missing_files/fehlende_Daten/';
               '/data/p_02035/Data/esf_data_2014-08-21/EEG/Ruhe/'
               };
 
