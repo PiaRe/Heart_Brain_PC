@@ -16,7 +16,7 @@ function config = setup_project_config()
 
     %% Base paths
     config.paths.base_code = '/data/pt_02778/HEP_ES/Heart_Brain_PC/';
-    config.paths.base_data = [config.paths.base_code, 'final/'];
+    config.paths.base_data = [config.paths.base_code, 'data/'];
 
     %% Data paths (using consistent naming)
     config.paths.raw_pc_data = [config.paths.base_data, 'raw/PC/'];
@@ -89,10 +89,9 @@ function config = setup_project_config()
     % Main configuration - can be manually adjusted for different analyses
     config.stats.time_hep = [-0.2, 0.8]; % Time window for HEP analysis
     config.stats.time_stat = [-0.2, 0.8]; % Time window for statistical analysis
-    config.stats.beat_type = 'PAC'; % Beat type to analyze: 'PAC', 'PVC', 'N'
-    config.stats.beat_comparison = 'PAC-1'; % Beat to compare (change as needed)
-    config.stats.beat_reference = 'PAC-3'; % Reference beat for comparison (change as needed)
-    config.stats.min_trials_required = 5; % Minimum number of trials required for analysis
+    config.stats.beat_type = 'PAC'; % Beat type to analyze: 'PAC', 'PVC', 'iN'
+    config.stats.beat_comparison = 'PAC-1'; % Beat to compare, e.g.: PAC+2, iPAC, iN (change as needed)
+    config.stats.beat_reference = 'PAC-3'; % Reference beat for comparison, e.g.: PVC-1, iN, PAC-2 (change as needed)
     config.stats.group_comparison = 0; % 1 = PC vs Control groups, 0 = within-subject comparison
 
     % Statistical analysis parameters (following Fieldtrip conventions)
@@ -110,12 +109,12 @@ function config = setup_project_config()
     config.stats.statistical_analysis.channel = {'all', '-ECG'};
     config.stats.statistical_analysis.latency = [-0.2, 0.8];
 
-    %% Predefined configs for specific analyses (examples)
+    %% Statistical configuration for control group analysis
     % PC vs Control group comparison (N beats)
     config.stats.pc_vs_control_n = config.stats; % Copy base config
-    config.stats.pc_vs_control_n.beat_type = 'N';
-    config.stats.pc_vs_control_n.beat_comparison = 'N';
-    config.stats.pc_vs_control_n.beat_reference = 'N'; % Ignored in group comparison
+    config.stats.pc_vs_control_n.beat_type = 'iN';
+    config.stats.pc_vs_control_n.beat_comparison = 'iN';
+    config.stats.pc_vs_control_n.beat_reference = 'iN'; % Ignored in group comparison
     config.stats.pc_vs_control_n.group_comparison = 1;
     config.stats.pc_vs_control_n.statistical_analysis.statistic = 'ft_statfun_indepsamplesT';
 

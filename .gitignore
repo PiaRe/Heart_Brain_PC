@@ -1,6 +1,6 @@
 # Project-specific directories
-final/
-**/final/
+data/
+**/data/
 
 # MATLAB specific
 *.asv
@@ -27,6 +27,7 @@ final/
 *.log
 Logfiles/
 **/Logfiles/
+*.txt
 
 # Temporary files
 *.tmp
