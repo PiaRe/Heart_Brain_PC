@@ -34,7 +34,9 @@ a matched control group. This repository contains the underlying code for analys
 - **EEGLAB** with plugin:
   - `erplab` 
 - **HEPLAB** 
-- **FieldTrip** 
+- **FieldTrip**
+- **Python**
+  - `jupyter-notebook`
 
 ## Citation
 
