@@ -36,6 +36,7 @@ a matched control group. This repository contains the underlying code for analys
     - HEPLAB 
   - FieldTrip (tested with 20220422)
   - Boundedline
+  - Inpaint Nans
 - **Python**
   - `jupyter-notebook`
 
