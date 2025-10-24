@@ -37,6 +37,7 @@ a matched control group. This repository contains the underlying code for analys
   - FieldTrip (tested with 20220422)
   - Boundedline
   - Inpaint Nans
+  - Brewermap
 - **Python**
   - `jupyter-notebook`
 
