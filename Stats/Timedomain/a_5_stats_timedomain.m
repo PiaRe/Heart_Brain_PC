@@ -27,8 +27,8 @@ function a_5_stats_timedomain(epochs_path, error_log_path, output_path, stats_co
         stat_params = stats_config.statistical_analysis;
 
         % Convert beat types to valid MATLAB field names
-        beat_comparison_field = convert_beat_type_to_field_name(beat_comparison);
-        beat_reference_field = convert_beat_type_to_field_name(beat_reference);
+        beat_comparison_field = beattype_to_fieldname(beat_comparison);
+        beat_reference_field = beattype_to_fieldname(beat_reference);
 
         % Check if this is a control group comparison
         is_control_analysis = isfield(stats_config, 'is_control_analysis') && stats_config.is_control_analysis;
@@ -117,31 +117,37 @@ function a_5_stats_timedomain(epochs_path, error_log_path, output_path, stats_co
 
         %% Remove trial field if present (required for ft_timelockstatistics)
         fprintf('Preparing data for statistical analysis...\n');
-        
+
         % Process comparison data - remove trial field
         for i = 1:length(comparison_data)
+
             if isfield(comparison_data{i}, 'trial')
                 fprintf('  Removing trial field from comparison data subject %d\n', i);
                 comparison_data{i} = rmfield(comparison_data{i}, 'trial');
             end
+
             % Also remove sampleinfo if present
             if isfield(comparison_data{i}, 'sampleinfo')
                 comparison_data{i} = rmfield(comparison_data{i}, 'sampleinfo');
             end
+
         end
-        
+
         % Process reference data - remove trial field
         for i = 1:length(reference_data)
+
             if isfield(reference_data{i}, 'trial')
                 fprintf('  Removing trial field from reference data subject %d\n', i);
                 reference_data{i} = rmfield(reference_data{i}, 'trial');
             end
+
             % Also remove sampleinfo if present
             if isfield(reference_data{i}, 'sampleinfo')
                 reference_data{i} = rmfield(reference_data{i}, 'sampleinfo');
             end
+
         end
-        
+
         fprintf('Data preparation complete.\n');
 
         %% Configure statistical analysis
@@ -229,6 +235,77 @@ function a_5_stats_timedomain(epochs_path, error_log_path, output_path, stats_co
             fprintf('Found %d significant negative clusters\n', length(sig_neg));
         end
 
+        %% Save cluster specifications
+        fprintf('Saving cluster specifications...\n');
+        base_filename = strrep(output_filename, '.mat', '');
+
+        save_cluster_specifications(stat, output_path, base_filename);
+
+        %% Generate plots
+        fprintf('Generating plots...\n');
+
+        % Generate automatic labels
+        [comparison_label, reference_label] = create_condition_labels(beat_comparison, beat_reference, ...
+            group_select, is_control_analysis, is_pac_pvc_comparison);
+
+        % Compute grand averages for plotting
+        cfg_ga = [];
+        cfg_ga.latency = stat_params.latency;
+        cfg_ga.parameter = 'avg';
+        cfg_ga.channel = {'all', '-ECG'};
+
+        comparison_data_ga = ft_timelockgrandaverage(cfg_ga, comparison_data{:});
+        reference_data_ga = ft_timelockgrandaverage(cfg_ga, reference_data{:});
+
+        % Compute difference (for topoplots)
+        cfg_diff = [];
+        cfg_diff.operation = 'subtract';
+        cfg_diff.parameter = 'avg';
+        difference_data_ga = ft_math(cfg_diff, comparison_data_ga, reference_data_ga);
+
+        % Get number of subjects for SEM calculation
+        n_subjects = length(comparison_data);
+
+        % Get time ROI for plotting
+        time_roi_plot = stat_params.latency;
+
+        % 1. Create multiplot with statistical results
+        fprintf('  Creating multiplot...\n');
+        plot_multiplot_stats(stat, comparison_data_ga, reference_data_ga, ...
+            comparison_label, reference_label, layout, time_roi_plot, ...
+            output_path, base_filename);
+
+        % 2. Plot cluster-averaged ERPs for positive and negative clusters
+        cluster_num = 1; % Default to first cluster
+
+        if isfield(stats_config, 'cluster_num')
+            cluster_num = stats_config.cluster_num;
+        end
+
+        fprintf('  Creating cluster-averaged plots...\n');
+        % Positive clusters
+        plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, ...
+            comparison_label, reference_label, time_roi_plot, output_path, ...
+            base_filename, 'pos', cluster_num, n_subjects);
+
+        % Negative clusters
+        plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, ...
+            comparison_label, reference_label, time_roi_plot, output_path, ...
+            base_filename, 'neg', cluster_num, n_subjects);
+
+        % 3. Plot topographies for both cluster polarities
+        fprintf('  Creating topographical plots...\n');
+        % Positive clusters
+        plot_topomap_comparison(stat, comparison_data_ga, reference_data_ga, ...
+            difference_data_ga, comparison_label, reference_label, ...
+            comparison_data_ga.time, output_path, base_filename, 'pos', cluster_num, layout);
+
+        % Negative clusters
+        plot_topomap_comparison(stat, comparison_data_ga, reference_data_ga, ...
+            difference_data_ga, comparison_label, reference_label, ...
+            comparison_data_ga.time, output_path, base_filename, 'neg', cluster_num, layout);
+
+        fprintf('Plots completed successfully.\n');
         fprintf('Time domain statistical analysis completed successfully.\n');
 
     catch ME

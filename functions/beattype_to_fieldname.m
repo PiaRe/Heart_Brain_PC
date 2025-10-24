@@ -1,5 +1,5 @@
-function field_name = convert_beat_type_to_field_name(beat_type)
-    % CONVERT_BEAT_TYPE_TO_FIELD_NAME - Convert beat type string to generic field name
+function field_name = beattype_to_fieldname(beat_type)
+    % BEATTYPE_TO_FIELDNAME - Convert beat type string to generic field name
     %
     % This function converts beat type strings (e.g., 'PAC+1', 'PVC-2') into generic
     % MATLAB field names by removing group prefix and replacing special characters.
@@ -12,11 +12,11 @@ function field_name = convert_beat_type_to_field_name(beat_type)
     %   field_name - Generic MATLAB field name string (e.g., 'plus1', 'minus2', 'zero', 'iN')
     %
     % Examples:
-    %   convert_beat_type_to_field_name('PAC+1') returns 'plus1'
-    %   convert_beat_type_to_field_name('PVC-2') returns 'minus2'
-    %   convert_beat_type_to_field_name('iN') returns 'iN'
-    %   convert_beat_type_to_field_name('iPAC') returns 'zero'
-    %   convert_beat_type_to_field_name('iPVC') returns 'zero'
+    %   beattype_to_fieldname('PAC+1') returns 'plus1'
+    %   beattype_to_fieldname('PVC-2') returns 'minus2'
+    %   beattype_to_fieldname('iN') returns 'iN'
+    %   beattype_to_fieldname('iPAC') returns 'zero'
+    %   beattype_to_fieldname('iPVC') returns 'zero'
     %
     % Author: Pia Reinfeld
 

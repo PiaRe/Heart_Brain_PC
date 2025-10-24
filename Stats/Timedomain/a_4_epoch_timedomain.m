@@ -95,7 +95,7 @@ function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
 
         for beat_idx = 1:length(relevant_beat_types)
             beat_type = relevant_beat_types{beat_idx};
-            field_name = convert_beat_type_to_field_name(beat_type);
+            field_name = beattype_to_fieldname(beat_type);
             allsubj.(group).(field_name) = {};
         end
 
@@ -219,7 +219,7 @@ function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
             % Process each relevant beat type for this subject
             for beat_idx = 1:length(relevant_beats)
                 beat_type = relevant_beats{beat_idx};
-                field_name = convert_beat_type_to_field_name(beat_type);
+                field_name = beattype_to_fieldname(beat_type);
 
                 % Create epochs for this beat type
                 try

@@ -40,7 +40,8 @@ function config = setup_project_config()
     config.paths.eeglab = '/data/pt_02584/Patty/Toolboxes/eeglab2021.1/';
     config.paths.heplab = '/HEPLAB-master/HEPLAB-master/Functions';
     config.paths.fieldtrip = '/data/pt_02584/Patty/Toolboxes/fieldtrip-20220422/';
-    config.paths.boundedline = [config.paths.base_code, 'functions/boundedline'];
+    config.paths.boundedline = '/data/p_02035/Matlab_codes/toolboxes/boundedline-pkg-master/boundedline/';
+    config.paths.inpaintnan = '/data/p_02035/Matlab_codes/toolboxes/Inpaint_Nans-master/';
 
     %% Processing parameters
     config.processing.sampling_rate = 500;

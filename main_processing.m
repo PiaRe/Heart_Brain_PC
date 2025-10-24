@@ -55,6 +55,7 @@ addpath([config.paths.base_code, 'Stats/ControlAnalysis/']);
 addpath(config.paths.heplab);
 addpath(config.paths.fieldtrip);
 addpath(genpath(config.paths.boundedline));
+addpath(config.paths.inpaintnan)
 
 % Create all task directories - both PC and control groups
 dirs_to_create = {config.paths.raw_pc_data, config.paths.raw_control_data, ...
