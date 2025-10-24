@@ -31,10 +31,10 @@ a matched control group. This repository contains the underlying code for analys
 ## Software Dependencies
 
 - **MATLAB** 
-  - EEGLAB with plugin:
+  - EEGLAB (tested with 2021.1)
     - erplab 
     - HEPLAB 
-  - FieldTrip
+  - FieldTrip (tested with 20220422)
   - Boundedline
 - **Python**
   - `jupyter-notebook`
