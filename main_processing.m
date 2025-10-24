@@ -141,23 +141,24 @@ eeglab; close;
 % fprintf('Running step 4a: Time domain HEP analysis for PC subjects\n');
 % a_4_epoch_timedomain(config.paths.post_ica_pc_path, config.paths.epochs_pc_path, ...
 %     config.paths.error_log_path, config.hep.epoch_length, config.hep.baseline_time, ...
-%     config.hep.baseline_option, config.beat_types.analysis_labels, 'PC', config.analysis.min_trials_required);
+%     config.hep.baseline_option, config.beat_types.analysis_labels, 'PC', config.analysis.min_trials_required, ...
+%     config.hep.output_filename_pc);
 
 % fprintf('Running step 4b: Time domain HEP analysis for control subjects\n');
 % a_4_epoch_timedomain(config.paths.post_ica_control_path, config.paths.epochs_control_path, ...
 %     config.paths.error_log_path, config.hep.epoch_length, config.hep.baseline_time, ...
 %     config.hep.baseline_option, config.beat_types.analysis_labels,'control',
-%     config.analysis.min_trials_required);
+%     config.analysis.min_trials_required, config.hep.output_filename_control);
 
 %% Step 5: Run statistics in time domain
-fprintf('Running step 5a: Running statistics in time domain for PC subjects\n');
+% fprintf('Running step 5a: Running statistics in time domain\n');
+% a_5_stats_timedomain(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats, config.hep.output_filename_pc);
 
-% Individual beats analysis (within-subject comparison)
-fprintf('  - %s vs %s analysis\n', config.stats.beat_comparison, config.stats.beat_reference);
-a_5_stats_timedomain(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats);
+% fprintf('Running step 5b: Controlgroup comparison analysis (PC vs Control)\n');
+% a_5_stats_timedomain(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.pc_vs_control_n, config.hep.output_filename_pc, config.paths.epochs_control_path);
 
-fprintf('Running step 5b: Group comparison analysis (PC vs Control)\n');
-fprintf('  - PC vs Control group comparison (%s beats)\n', config.stats.pc_vs_control_n.beat_comparison);
+fprintf('Running step 5c: PAC vs PVC comparison analysis\n');
 a_5_stats_timedomain(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.pc_vs_control_n, config.paths.epochs_control_path);
+    config.paths.output_path, config.stats.pac_vs_pvc, config.hep.output_filename_pc);

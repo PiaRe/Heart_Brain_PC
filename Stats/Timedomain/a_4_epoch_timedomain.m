@@ -1,4 +1,4 @@
-function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch_length, baseline_time, baseline_option, analysis_beat_types, subject_type, min_trials_required)
+function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch_length, baseline_time, baseline_option, analysis_beat_types, subject_type, min_trials_required, output_filename)
     % A_4_EPOCH_TIMEDOMAIN - Epoch the data for time domain HEP analysis
     %
     % This function performs epoching for Heartbeat Evoked Potentials (HEP) analysis.
@@ -438,47 +438,37 @@ function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
 
     end
 
-    %% Clean up empty cells and compute grand averages
-    fprintf('Computing grand averages...\n');
+    % After processing all PAC/PVC subjects: Combine fields for PC group
+    if strcmp(subject_type, 'PC')
+        % Collect all unique beat type fields from PAC and PVC
+        pac_fields = fieldnames(allsubj.PAC);
+        pvc_fields = fieldnames(allsubj.PVC);
+        all_fields = unique([pac_fields; pvc_fields]);
+        allsubj.PC = struct();
 
-    for group_idx = 1:length(condition_groups)
-        group = condition_groups{group_idx};
+        for f = 1:length(all_fields)
+            field_name = all_fields{f};
+            pac_data = {};
+            pvc_data = {};
 
-        % Get all field names in this group
-        beat_fields = fieldnames(allsubj.(group));
-
-        for field_idx = 1:length(beat_fields)
-            field_name = beat_fields{field_idx};
-
-            % Remove empty cells
-            subject_data = allsubj.(group).(field_name);
-            subject_data = subject_data(~cellfun('isempty', subject_data));
-            allsubj.(group).(field_name) = subject_data;
-
-            % Compute grand average if we have data
-            if ~isempty(subject_data)
-                cfg_ga = [];
-                cfg_ga.channel = 'all';
-                cfg_ga.latency = 'all';
-                cfg_ga.parameter = 'avg';
-
-                try
-                    allsubj.(group).grand_average.(field_name) = ft_timelockgrandaverage(cfg_ga, subject_data{:});
-                    fprintf('  - Grand average for %s.%s: %d subjects\n', group, field_name, length(subject_data));
-                catch ME
-                    fprintf('Error computing grand average for %s.%s: %s\n', group, field_name, ME.message);
-                end
-
-            else
-                fprintf('  - No data for %s.%s\n', group, field_name);
+            if isfield(allsubj.PAC, field_name)
+                pac_data = allsubj.PAC.(field_name);
             end
 
+            if isfield(allsubj.PVC, field_name)
+                pvc_data = allsubj.PVC.(field_name);
+            end
+
+            % Remove empty cells
+            pac_data = pac_data(~cellfun('isempty', pac_data));
+            pvc_data = pvc_data(~cellfun('isempty', pvc_data));
+            allsubj.PC.(field_name) = [pac_data, pvc_data];
         end
 
     end
 
     %% Save results
-    output_filename = sprintf('allsubj_timedomain_%s_%s.mat', subject_type, baseline_option);
+    % Use provided output filename
     output_path = fullfile(epoched_path, output_filename);
 
     try

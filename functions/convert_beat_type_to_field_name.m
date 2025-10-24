@@ -1,22 +1,34 @@
 function field_name = convert_beat_type_to_field_name(beat_type)
-    % CONVERT_BEAT_TYPE_TO_FIELD_NAME - Convert beat type string to valid MATLAB field name
+    % CONVERT_BEAT_TYPE_TO_FIELD_NAME - Convert beat type string to generic field name
     %
-    % This function converts beat type strings (e.g., 'PAC+1', 'PVC-2') into valid
-    % MATLAB field names by replacing special characters with text equivalents.
+    % This function converts beat type strings (e.g., 'PAC+1', 'PVC-2') into generic
+    % MATLAB field names by removing group prefix and replacing special characters.
+    % Special case: iPAC and iPVC are mapped to 'zero'.
     %
     % Input:
     %   beat_type - String representing a beat type (e.g., 'PAC+1', 'PVC-2', 'iN')
     %
     % Output:
-    %   field_name - Valid MATLAB field name string (e.g., 'PACplus1', 'PVCminus2', 'iN')
+    %   field_name - Generic MATLAB field name string (e.g., 'plus1', 'minus2', 'zero', 'iN')
     %
     % Examples:
-    %   convert_beat_type_to_field_name('PAC+1') returns 'PACplus1'
-    %   convert_beat_type_to_field_name('PVC-2') returns 'PVCminus2'
+    %   convert_beat_type_to_field_name('PAC+1') returns 'plus1'
+    %   convert_beat_type_to_field_name('PVC-2') returns 'minus2'
     %   convert_beat_type_to_field_name('iN') returns 'iN'
+    %   convert_beat_type_to_field_name('iPAC') returns 'zero'
+    %   convert_beat_type_to_field_name('iPVC') returns 'zero'
     %
     % Author: Pia Reinfeld
-    
+
+    % Remove PAC/PVC prefix if present
+    field_name = regexprep(beat_type, '^(PAC|PVC)', '');
     % Replace special characters with text equivalents
-    field_name = strrep(strrep(beat_type, '+', 'plus'), '-', 'minus');
+    field_name = strrep(strrep(field_name, '+', 'plus'), '-', 'minus');
+    % Remove any leading/trailing whitespace
+    field_name = strtrim(field_name);
+    % Special cases that become zero
+    if strcmp(field_name, 'iPAC') || strcmp(field_name, 'iPVC') || strcmp(field_name, '0')
+        field_name = 'zero';
+    end
+
 end

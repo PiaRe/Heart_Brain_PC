@@ -23,8 +23,8 @@ function config = setup_project_config()
     config.paths.raw_control_data = [config.paths.base_data, 'raw/control/'];
     config.paths.crop_marker_path = [config.paths.base_data, 'raw/crop_marker/'];
     config.paths.event_data = [config.paths.base_data, 'raw/event_marker/'];
-    config.paths.no_ica_pc_path = [config.paths.base_data, 'ICA/noICA/PC/'];
-    config.paths.no_ica_control_path = [config.paths.base_data, 'ICA/noICA/control/'];
+    config.paths.no_ica_pc_path = [config.paths.base_data, 'ICA/no/PC/'];
+    config.paths.no_ica_control_path = [config.paths.base_data, 'ICA/no/control/'];
     config.paths.pre_ica_pc_path = [config.paths.base_data, 'ICA/pre/PC/'];
     config.paths.pre_ica_control_path = [config.paths.base_data, 'ICA/pre/control/'];
     config.paths.post_ica_pc_path = [config.paths.base_data, 'ICA/post/PC/'];
@@ -68,8 +68,14 @@ function config = setup_project_config()
     config.hep.epoch_length = [-200, 800]; % in ms
     config.hep.baseline_time = [-150, -50]; % in ms
     config.hep.baseline_option = 'ref'; % 'no', 'ref', 'int'
-    config.hep.ica_option = 'yes'; % 'yes', 'no'
-    config.hep.reference_beat = 'PC-3'; % Reference beat type for baseline correction ('iN', 'PC-4', 'PC-3', 'iPC', etc.)
+    config.hep.ica_status = 'post'; % 'no', 'post' (choose ICA correction level)
+
+    %% Dynamic output filename helper and generated filenames
+    config.hep.get_output_filename = @(subject_type, baseline_option, ica_status) sprintf('allsubj_timedomain_%s_%s_%s.mat', subject_type, baseline_option, ica_status);
+
+    % Pre-generated filenames for current analysis
+    config.hep.output_filename_pc = config.hep.get_output_filename('PC', config.hep.baseline_option, config.hep.ica_status);
+    config.hep.output_filename_control = config.hep.get_output_filename('control', config.hep.baseline_option, config.hep.ica_status);
 
     %% Beat type definitions
     config.beat_types.raw_file_labels = {'N'; 'S'; 'V'; 'badECG'}; % Beat types as they appear in raw table; S=PAC, V=PVC
@@ -86,15 +92,6 @@ function config = setup_project_config()
     config.electrodes.eeg_channels = 1:31;
 
     %% Statistics configuration for time domain analysis
-    % Main configuration - can be manually adjusted for different analyses
-    config.stats.time_hep = [-0.2, 0.8]; % Time window for HEP analysis
-    config.stats.time_stat = [-0.2, 0.8]; % Time window for statistical analysis
-    config.stats.beat_type = 'PAC'; % Beat type to analyze: 'PAC', 'PVC', 'iN'
-    config.stats.beat_comparison = 'PAC-1'; % Beat to compare, e.g.: PAC+2, iPAC, iN (change as needed)
-    config.stats.beat_reference = 'PAC-3'; % Reference beat for comparison, e.g.: PVC-1, iN, PAC-2 (change as needed)
-    config.stats.group_comparison = 0; % 1 = PC vs Control groups, 0 = within-subject comparison
-
-    % Statistical analysis parameters (following Fieldtrip conventions)
     config.stats.statistical_analysis.parameter = 'avg';
     config.stats.statistical_analysis.method = 'montecarlo';
     config.stats.statistical_analysis.statistic = 'ft_statfun_depsamplesT';
@@ -109,15 +106,39 @@ function config = setup_project_config()
     config.stats.statistical_analysis.channel = {'all', '-ECG'};
     config.stats.statistical_analysis.latency = [-0.2, 0.8];
 
-    %% Statistical configuration for control group analysis
-    % PC vs Control group comparison (N beats)
-    config.stats.pc_vs_control_n = config.stats; % Copy base config
-    config.stats.pc_vs_control_n.beat_type = 'iN';
-    config.stats.pc_vs_control_n.beat_comparison = 'iN';
-    config.stats.pc_vs_control_n.beat_reference = 'iN'; % Ignored in group comparison
-    config.stats.pc_vs_control_n.group_comparison = 1;
-    config.stats.pc_vs_control_n.statistical_analysis.statistic = 'ft_statfun_indepsamplesT';
+    %% Statistical configuration for within group comparison
+    % Main configuration - can be manually adjusted for different analyses
+    config.stats.paths = config.paths; % Include paths in stats config
+    config.stats.time_hep = [-0.2, 0.8];
+    config.stats.time_stat = [-0.2, 0.8];
+    config.stats.beat_comparison = '+1'; % z.B. -3, +1, iN, 0 (0 = PC itself)
+    config.stats.beat_reference = '-3'; % z.B. -3, +1, iN, 0
+    config.stats.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = beide kombiniert)
 
-    fprintf('Project configuration setup complete.\n');
+    %% Statistical configuration for between control group analysis
+    % PC vs Control group comparison (N beats)
+    % For control group comparison, we compare iN beats from PC group with iN beats from control group
+    config.stats.pc_vs_control_n = config.stats; % Copy base config
+    config.stats.pc_vs_control_n.beat_comparison = 'iN'; % iN beats from PC group (or PAC/PVC when group_select is PAC/PVC)
+    config.stats.pc_vs_control_n.beat_reference = 'iN'; % iN beats from control group
+    config.stats.pc_vs_control_n.is_control_analysis = true; % Flag to indicate this is a control group comparison
+    config.stats.pc_vs_control_n.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both groups combined)
+    config.stats.pc_vs_control_n.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples for group comparison
+    config.stats.pc_vs_control_n.control_filename = config.hep.output_filename_control; % Filename for control group data
+
+    % Additional configurations for PAC and PVC specific control comparisons
+    config.stats.pac_vs_control_n = config.stats.pc_vs_control_n;
+    config.stats.pac_vs_control_n.group_select = 'PAC'; % Compare PAC group iN with control iN
+
+    config.stats.pvc_vs_control_n = config.stats.pc_vs_control_n;
+    config.stats.pvc_vs_control_n.group_select = 'PVC'; % Compare PVC group iN with control iN
+
+    %% Statistical configuration for PAC vs PVC between comparison
+    % Compare the same beat type between PAC and PVC groups (e.g., PAC+1 vs PVC+1)
+    config.stats.pac_vs_pvc = config.stats; % Copy base config
+    config.stats.pac_vs_pvc.beat_comparison = '+1'; % Beat type to compare (can be changed to any beat type: iN, -1, -2, -3, +1, +2, +3, etc.)
+    config.stats.pac_vs_pvc.beat_reference = '+1'; % Same beat type for reference group
+    config.stats.pac_vs_pvc.is_pac_pvc_comparison = true; % Flag to indicate this is a PAC vs PVC comparison
+    config.stats.pac_vs_pvc.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples for group comparison
 
 end
