@@ -66,6 +66,11 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
         pac_beats = beat_conditions(contains(beat_conditions, 'PAC'));
         pvc_beats = beat_conditions(contains(beat_conditions, 'PVC'));
 
+        % Add iN beat type to both PAC and PVC groups
+        % Ensure consistent dimensions (vertical concatenation for column vectors)
+        pac_beats = [pac_beats; {'iN'}];
+        pvc_beats = [pvc_beats; {'iN'}];
+
         condition_groups = {'PAC', 'PVC'}; % Groups for PAC and PVC beats
     elseif strcmp(subject_type, 'control')
         % For control subjects, only use iN
@@ -234,7 +239,8 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
                         EEG_iN = pop_epoch(EEG, {'iN'}, epoch_length / 1000, 'epochinfo', 'yes');
 
                         % Remove all epochs with overlapping beats and badECG
-                        exclude_types = [pac_beats; pvc_beats; {'badECG'}];
+                        % Note: iN should not be in exclude_types since we're selecting iN epochs
+                        exclude_types = [setdiff(pac_beats, {'iN'}); setdiff(pvc_beats, {'iN'}); {'badECG'}];
 
                         EEG_iN = pop_selectevent(EEG_iN, 'type', exclude_types, ...
                             'deleteevents', 'off', 'deleteepochs', 'on', 'invertepochs', 'on');
@@ -327,6 +333,7 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
                         fprintf('    Applied iN overlapping correction to %s time periods for %s epochs\n', preceding_beat_type, beat_type);
 
                     else
+
                         % Regular epoching for all other beat types
                         EEG_epoch = pop_epoch(EEG, {beat_type}, epoch_length / 1000, 'epochinfo', 'yes');
                     end
@@ -355,8 +362,8 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
                             data_processed = data_ft;
                         case 'ref'
                             % Apply baseline of PC-3 beat to all beats
-                            % Control subjects always use 'int' baseline regardless of baseline_option setting
-                            if strcmp(subject_type, 'PC')
+                            % Control subjects and beat type 'iN' always use 'int' baseline regardless of baseline_option setting
+                            if strcmp(subject_type, 'PC') && ~strcmp(beat_type, 'iN')
                                 % Check if we have PC-3 baseline data for this subject
                                 if isfield(reference_baseline_data, subjid)
                                     % Apply the PC-3 baseline to this beat type using apply_baseline function

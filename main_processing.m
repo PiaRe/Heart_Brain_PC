@@ -159,9 +159,9 @@ eeglab; close;
 %     config.analysis.min_trials_required, config.hep.output_filename_control);
 
 %% Step 6: Run statistics in time domain for EEG channels
-% fprintf('Running step 6a: Running EEG statistics in time domain (within-group)\n');
-% a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-%     config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
+fprintf('Running step 6a: Running EEG statistics in time domain (within-group)\n');
+a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+    config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
 
 % fprintf('Running step 6b: EEG PC vs Control comparison analysis\n');
 % a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
@@ -172,9 +172,9 @@ eeglab; close;
 %     config.paths.output_path, config.stats.eeg.pac_vs_pvc, config.hep.output_filename_pc);
 
 %% Step 7: Run statistics in time domain for ECG channel
-fprintf('Running step 7a: Running ECG statistics in time domain (within-group)\n');
-a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.ecg.within_group, config.hep.output_filename_pc);
+% fprintf('Running step 7a: Running ECG statistics in time domain (within-group)\n');
+% a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.ecg.within_group, config.hep.output_filename_pc);
 
 % fprintf('Running step 7b: ECG PAC vs PVC comparison analysis\n');
 % a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...

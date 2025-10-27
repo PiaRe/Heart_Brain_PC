@@ -23,7 +23,14 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         %% Extract configuration parameters
         beat_comparison = stats_config.beat_comparison;
         beat_reference = stats_config.beat_reference;
-        group_select = stats_config.group_select;
+
+        % group_select is not needed for PAC vs PVC comparison
+        if isfield(stats_config, 'group_select')
+            group_select = stats_config.group_select;
+        else
+            group_select = 'N/A'; % For PAC vs PVC comparison
+        end
+
         stat_params = stats_config.statistical_analysis;
 
         % Convert beat types to valid MATLAB field names
@@ -44,7 +51,7 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         fprintf('  PAC vs PVC comparison: %s\n', mat2str(is_pac_pvc_comparison));
 
         %% Load layout and neighbours for statistical analysis
-        settings_path = stats_config.paths.settings_path;
+        settings_path = stat_params.paths.settings_path;
         load(fullfile(settings_path, 'layout.mat'), 'layout');
         load(fullfile(settings_path, 'neighbours.mat'), 'neighbours');
         fprintf('Loaded layout and neighbours from: %s\n', settings_path);
@@ -113,6 +120,147 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         % Prepare data for FieldTrip statistical analysis
         if isempty(comparison_data) || isempty(reference_data)
             error('No data found for the specified beat comparison or reference.');
+        end
+
+        %% Check if trial downsampling is needed
+        % Downsample iN trials to match non-iN trial count if configured
+        % This prevents trial count imbalance from affecting statistics
+
+        downsample_enabled = false;
+
+        if isfield(stat_params, 'downsample_iN_trials')
+            downsample_enabled = stat_params.downsample_iN_trials;
+        end
+
+        downsampling_occurred = false;
+        downsampling_info = struct();
+
+        % Check if we're comparing iN with non-iN beats
+        is_iN_comparison = strcmp(beat_comparison, 'iN');
+        is_iN_reference = strcmp(beat_reference, 'iN');
+        should_downsample = downsample_enabled && (is_iN_comparison || is_iN_reference) && ~(is_iN_comparison && is_iN_reference);
+
+        if should_downsample
+            fprintf('Trial downsampling enabled for iN vs non-iN comparison...\n');
+
+            % Determine which condition has iN and which has non-iN
+            if is_iN_comparison && ~is_iN_reference
+                % comparison is iN, reference is not
+                iN_data = comparison_data;
+                non_iN_data = reference_data;
+                iN_is_comparison = true;
+
+            elseif ~is_iN_comparison && is_iN_reference
+                % reference is iN, comparison is not
+                iN_data = reference_data;
+                non_iN_data = comparison_data;
+                iN_is_comparison = false;
+            end
+
+            % Calculate target trial count (minimum across all subjects in non-iN condition)
+            non_iN_trial_counts = zeros(length(non_iN_data), 1);
+
+            for i = 1:length(non_iN_data)
+
+                if isfield(non_iN_data{i}, 'trial')
+                    non_iN_trial_counts(i) = size(non_iN_data{i}.trial, 1);
+                end
+
+            end
+
+            % Also get iN trial counts for comparison
+            iN_trial_counts = zeros(length(iN_data), 1);
+
+            for i = 1:length(iN_data)
+
+                if isfield(iN_data{i}, 'trial')
+                    iN_trial_counts(i) = size(iN_data{i}.trial, 1);
+                end
+
+            end
+
+            fprintf('  Original trial counts - iN: mean=%.1f, range=[%d-%d]\n', ...
+                mean(iN_trial_counts), min(iN_trial_counts), max(iN_trial_counts));
+            fprintf('  Original trial counts - non-iN: mean=%.1f, range=[%d-%d]\n', ...
+                mean(non_iN_trial_counts), min(non_iN_trial_counts), max(non_iN_trial_counts));
+
+            % Downsample iN trials to match non-iN for each subject
+            downsampled_iN_data = cell(size(iN_data));
+            subject_downsampling_info = struct();
+
+            for i = 1:length(iN_data)
+                target_n_trials = non_iN_trial_counts(i);
+
+                [downsampled_iN_data{i}, was_ds, orig_n, final_n] = ...
+                    downsample_trials_randomly(iN_data{i}, target_n_trials, i);
+
+                % Store info for this subject
+                subject_downsampling_info(i).subject_idx = i;
+                subject_downsampling_info(i).was_downsampled = was_ds;
+                subject_downsampling_info(i).original_n_trials = orig_n;
+                subject_downsampling_info(i).final_n_trials = final_n;
+                subject_downsampling_info(i).target_n_trials = target_n_trials;
+
+                if was_ds
+                    downsampling_occurred = true;
+                end
+
+            end
+
+            % CRITICAL: Recalculate avg for downsampled data
+            % The avg field was calculated with all trials in a_5_epoch_timedomain
+            % We need to recalculate it with the downsampled trials
+            fprintf('Recalculating averages for downsampled trials...\n');
+
+            for i = 1:length(downsampled_iN_data)
+
+                if ~isempty(downsampled_iN_data{i}) && isfield(downsampled_iN_data{i}, 'trial')
+                    % Recalculate avg from downsampled trials
+                    downsampled_iN_data{i}.avg = squeeze(mean(downsampled_iN_data{i}.trial, 1));
+                    downsampled_iN_data{i}.dimord = 'chan_time';
+
+                    fprintf('  Subject %d: Recalculated avg from %d downsampled trials\n', ...
+                        i, subject_downsampling_info(i).final_n_trials);
+                end
+
+            end
+
+            % Update the appropriate data variable with downsampled and recalculated data
+            if iN_is_comparison
+                comparison_data = downsampled_iN_data;
+            else
+                reference_data = downsampled_iN_data;
+            end
+
+            % Store overall downsampling info
+            downsampling_info.enabled = true;
+            downsampling_info.occurred = downsampling_occurred;
+
+            if iN_is_comparison
+                downsampling_info.iN_condition = 'comparison';
+            else
+                downsampling_info.iN_condition = 'reference';
+            end
+
+            downsampling_info.beat_comparison = beat_comparison;
+            downsampling_info.beat_reference = beat_reference;
+            downsampling_info.subject_details = subject_downsampling_info;
+
+            fprintf('Trial downsampling and avg recalculation complete. Downsampling occurred: %s\n', mat2str(downsampling_occurred));
+
+        else
+
+            if downsample_enabled && is_iN_comparison && is_iN_reference
+                fprintf('Trial downsampling disabled: both conditions are iN\n');
+            elseif downsample_enabled
+                fprintf('Trial downsampling disabled: neither condition is iN\n');
+            else
+                fprintf('Trial downsampling not enabled in config\n');
+            end
+
+            downsampling_info.enabled = false;
+            downsampling_info.occurred = false;
+            downsampling_info.reason = 'Not configured or not applicable';
         end
 
         %% Remove trial field if present (required for ft_timelockstatistics)
@@ -196,14 +344,21 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         [stat] = ft_timelockstatistics(cfg, comparison_data{:}, reference_data{:});
 
         %% Save results
+        % Add suffix if downsampling was used
+        downsample_suffix = '';
+
+        if downsampling_info.occurred
+            downsample_suffix = '_downsampled';
+        end
+
         if is_pac_pvc_comparison
-            output_filename = sprintf('stats_GroupComparison_%s_PACvsPVC.mat', beat_comparison);
+            output_filename = sprintf('stats_EEG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
             comparison_desc = sprintf('PAC vs PVC (%s beats)', beat_comparison);
         elseif is_control_analysis
-            output_filename = sprintf('stats_GroupComparison_%s_%s_PCvsControl.mat', beat_type, beat_comparison);
+            output_filename = sprintf('stats_EEG_PCvsControl_%s_%s%s.mat', beat_type, beat_comparison, downsample_suffix);
             comparison_desc = sprintf('PC vs Control (%s beats)', beat_comparison);
         else
-            output_filename = sprintf('stats_%s_%s_vs_%s.mat', beat_type, beat_comparison, beat_reference);
+            output_filename = sprintf('stats_EEG_within_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
             comparison_desc = sprintf('%s vs %s', beat_comparison, beat_reference);
         end
 
@@ -219,6 +374,7 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         save_data.beat_reference = beat_reference;
         save_data.is_control_analysis = is_control_analysis;
         save_data.is_pac_pvc_comparison = is_pac_pvc_comparison;
+        save_data.downsampling_info = downsampling_info;
         save_data.analysis_date = datestr(now);
 
         save(output_file_path, 'save_data');
@@ -239,7 +395,48 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         fprintf('Saving cluster specifications...\n');
         base_filename = strrep(output_filename, '.mat', '');
 
-        save_cluster_specifications(stat, output_path, base_filename);
+        % Prepare metadata for CSV export
+        metadata = struct();
+        metadata.comparison_desc = comparison_desc;
+        metadata.modality = 'EEG';
+        metadata.beat_comparison = beat_comparison;
+        metadata.beat_reference = beat_reference;
+        metadata.beat_type = beat_type;
+        metadata.n_subjects = length(comparison_data);
+        metadata.analysis_date = datestr(now);
+
+        % HEP/Preprocessing parameters from statistical_analysis config (inherited from base)
+        if isfield(stat_params, 'hep_params')
+            hep = stat_params.hep_params;
+            metadata.baseline_option = hep.baseline_option;
+            metadata.baseline_start = hep.baseline_time(1);
+            metadata.baseline_end = hep.baseline_time(2);
+            metadata.epoch_start = hep.epoch_length(1);
+            metadata.epoch_end = hep.epoch_length(2);
+            metadata.ica_status = hep.ica_status;
+        end
+
+        % Statistical parameters
+        metadata.stat_method = stat_params.method;
+        metadata.correctm = stat_params.correctm;
+        metadata.alpha = stat_params.alpha;
+        metadata.clusteralpha = stat_params.clusteralpha;
+        metadata.numrandomization = stat_params.numrandomization;
+        metadata.statistic = stat_params.statistic;
+        metadata.latency_start = stat_params.latency(1);
+        metadata.latency_end = stat_params.latency(2);
+
+        % Downsampling information
+        metadata.downsampling_enabled = downsampling_info.enabled;
+        metadata.downsampling_occurred = downsampling_info.occurred;
+
+        if isfield(downsampling_info, 'iN_condition')
+            metadata.downsampling_iN_condition = downsampling_info.iN_condition;
+        else
+            metadata.downsampling_iN_condition = 'N/A';
+        end
+
+        save_cluster_specifications(stat, output_path, base_filename, metadata);
 
         %% Generate plots
         fprintf('Generating plots...\n');
