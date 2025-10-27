@@ -1,11 +1,11 @@
-function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch_length, baseline_time, baseline_option, analysis_beat_types, subject_type, min_trials_required, output_filename)
-    % A_4_EPOCH_TIMEDOMAIN - Epoch the data for time domain HEP analysis
+function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch_length, baseline_time, baseline_option, analysis_beat_types, subject_type, min_trials_required, output_filename)
+    % A_5_EPOCH_TIMEDOMAIN - Epoch the data for time domain HEP analysis
     %
     % This function performs epoching for Heartbeat Evoked Potentials (HEP) analysis.
     % It processes both premature contractions (PC) and control subjects with normal beats.
     %
     % Key steps:
-    %   1. Loads ICA-cleaned EEG data from post-ICA processing
+    %   1. Loads ICA-cleaned EEG data with reintegrated ECG channel
     %   2. Creates epochs around different heartbeat types (PAC, PVC, normal beats)
     %   3. Removes epochs marked as bad ECG artifacts
     %   4. Applies baseline correction with different options
@@ -16,7 +16,7 @@ function a_4_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
     %   9. Saves epoched data and analysis results
     %
     % Inputs:
-    %   post_ica_path      - Path to data after ICA processing (string)
+    %   post_ica_path      - Path to data after ICA processing with reintegrated ECG (string)
     %   epoched_path       - Path for saving epoched data (string)
     %   error_log_path     - Path for saving error logs (string)
     %   epoch_length       - Time window for epochs [start, end] in ms (e.g., [-200, 800])

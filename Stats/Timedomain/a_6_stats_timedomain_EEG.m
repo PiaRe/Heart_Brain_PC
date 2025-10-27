@@ -1,5 +1,5 @@
-function a_5_stats_timedomain(epochs_path, error_log_path, output_path, stats_config, input_filename, epochs_path_control)
-    % A_5_STATS_TIMEDOMAIN - Statistical analysis of HEP in time domain
+function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stats_config, input_filename, epochs_path_control)
+    % A_6_STATS_TIMEDOMAIN_EEG - Statistical analysis of HEP in time domain
     %
     % This function performs statistical analysis of heartbeat evoked potentials
     % in the time domain using cluster-based permutation testing.
@@ -309,10 +309,8 @@ function a_5_stats_timedomain(epochs_path, error_log_path, output_path, stats_co
         fprintf('Time domain statistical analysis completed successfully.\n');
 
     catch ME
-        error_msg = sprintf('Error in a_5_stats_timedomain: %s\n%s', ME.message, getReport(ME));
-        fprintf('%s\n', error_msg);
-
-        % Log error
+        error_msg = sprintf('Error in a_6_stats_timedomain_EEG: %s\n%s', ME.message, getReport(ME));
+        fprintf('%s\n', error_msg); % Log error
         error_file = fullfile(error_log_path, sprintf('stats_timedomain_error_%s.txt', datestr(now, 'yyyymmdd_HHMMSS')));
         fid = fopen(error_file, 'w');
 

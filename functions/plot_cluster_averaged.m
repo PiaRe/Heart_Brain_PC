@@ -1,5 +1,9 @@
 function plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, comparison_label, reference_label, time_roi, save_path, filename, cluster_polarity, cluster_num, n_subjects)
-    % PLOT_CLUSTER_AVERAGED - Plot averaged ERP over significant cluster channels
+    % PLOT_CLUSTER_AVERAGED - Plot averaged signal over significant cluster channels
+    %
+    % This function creates plots of averaged event-related signals (EEG/ECG)
+    % over channels belonging to a significant cluster from cluster-based
+    % permutation testing. Works for both EEG (HEP) and ECG data.
     %
     % Inputs:
     %   stat                - Statistical results from ft_timelockstatistics

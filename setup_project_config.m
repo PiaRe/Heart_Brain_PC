@@ -92,54 +92,62 @@ function config = setup_project_config()
     config.electrodes.exclude_channels = {'Fp1', 'Fp2'};
     config.electrodes.eeg_channels = 1:31;
 
-    %% Statistics configuration for time domain analysis
-    config.stats.statistical_analysis.parameter = 'avg';
-    config.stats.statistical_analysis.method = 'montecarlo';
-    config.stats.statistical_analysis.statistic = 'ft_statfun_depsamplesT';
-    config.stats.statistical_analysis.correctm = 'cluster';
-    config.stats.statistical_analysis.clusteralpha = 0.05;
-    config.stats.statistical_analysis.clusterstatistic = 'maxsum';
-    config.stats.statistical_analysis.minnbchan = 2;
-    config.stats.statistical_analysis.tail = 0;
-    config.stats.statistical_analysis.clustertail = 0;
-    config.stats.statistical_analysis.alpha = 0.025;
-    config.stats.statistical_analysis.numrandomization = 5000;
-    config.stats.statistical_analysis.channel = {'all', '-ECG'};
-    config.stats.statistical_analysis.latency = [-0.2, 0.8];
+    %% Statistics configuration - Base parameters shared by all analyses (no statistic here)
+    config.stats.statistical_analysis_base.parameter = 'avg';
+    config.stats.statistical_analysis_base.method = 'montecarlo';
+    config.stats.statistical_analysis_base.correctm = 'cluster';
+    config.stats.statistical_analysis_base.clusteralpha = 0.05;
+    config.stats.statistical_analysis_base.clusterstatistic = 'maxsum';
+    config.stats.statistical_analysis_base.tail = 0;
+    config.stats.statistical_analysis_base.clustertail = 0;
+    config.stats.statistical_analysis_base.alpha = 0.025;
+    config.stats.statistical_analysis_base.numrandomization = 5000;
+    config.stats.statistical_analysis_base.latency = [-0.2, 0.8]; % Time window for statistical analysis
+    config.stats.statistical_analysis_base.paths = config.paths;
 
-    %% Statistical configuration for within group comparison
-    % Main configuration - can be manually adjusted for different analyses
-    config.stats.paths = config.paths; % Include paths in stats config
-    config.stats.time_hep = [-0.2, 0.8];
-    config.stats.time_stat = [-0.2, 0.8];
-    config.stats.beat_comparison = '+1'; % z.B. -3, +1, iN, 0 (0 = PC itself)
-    config.stats.beat_reference = '-3'; % z.B. -3, +1, iN, 0
-    config.stats.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = beide kombiniert)
+    %% COMPARISON TYPE 1: Within-group comparison (e.g., PAC+1 vs PAC-3)
+    config.stats.within_group.statistical_analysis = config.stats.statistical_analysis_base;
+    config.stats.within_group.statistical_analysis.statistic = 'ft_statfun_depsamplesT'; % Dependent samples
+    config.stats.within_group.beat_comparison = '+1'; % e.g., -3, +1, iN, 0 (0 = PC itself)
+    config.stats.within_group.beat_reference = '-3'; % e.g., -3, +1, iN, 0
+    config.stats.within_group.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
 
-    %% Statistical configuration for between control group analysis
-    % PC vs Control group comparison (N beats)
-    % For control group comparison, we compare iN beats from PC group with iN beats from control group
-    config.stats.pc_vs_control_n = config.stats; % Copy base config
-    config.stats.pc_vs_control_n.beat_comparison = 'iN'; % iN beats from PC group (or PAC/PVC when group_select is PAC/PVC)
-    config.stats.pc_vs_control_n.beat_reference = 'iN'; % iN beats from control group
-    config.stats.pc_vs_control_n.is_control_analysis = true; % Flag to indicate this is a control group comparison
-    config.stats.pc_vs_control_n.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both groups combined)
-    config.stats.pc_vs_control_n.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples for group comparison
-    config.stats.pc_vs_control_n.control_filename = config.hep.output_filename_control; % Filename for control group data
+    %% COMPARISON TYPE 2: PC vs Control (N beats)
+    config.stats.pc_vs_control.statistical_analysis = config.stats.statistical_analysis_base;
+    config.stats.pc_vs_control.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples
+    config.stats.pc_vs_control.beat_comparison = 'iN'; % iN beats from PC group
+    config.stats.pc_vs_control.beat_reference = 'iN'; % iN beats from control group
+    config.stats.pc_vs_control.is_control_analysis = true;
+    config.stats.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
+    config.stats.pc_vs_control.control_filename = config.hep.output_filename_control;
 
-    % Additional configurations for PAC and PVC specific control comparisons
-    config.stats.pac_vs_control_n = config.stats.pc_vs_control_n;
-    config.stats.pac_vs_control_n.group_select = 'PAC'; % Compare PAC group iN with control iN
+    %% COMPARISON TYPE 3: PAC vs PVC
+    config.stats.pac_vs_pvc.statistical_analysis = config.stats.statistical_analysis_base;
+    config.stats.pac_vs_pvc.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples
+    config.stats.pac_vs_pvc.beat_comparison = '+1';
+    config.stats.pac_vs_pvc.beat_reference = '+1';
+    config.stats.pac_vs_pvc.is_pac_pvc_comparison = true;
 
-    config.stats.pvc_vs_control_n = config.stats.pc_vs_control_n;
-    config.stats.pvc_vs_control_n.group_select = 'PVC'; % Compare PVC group iN with control iN
+    %% CHANNEL-SPECIFIC CONFIGURATIONS
+    % Create separate namespaces for EEG and ECG analyses
+    comparison_types = {'within_group', 'pc_vs_control', 'pac_vs_pvc'};
 
-    %% Statistical configuration for PAC vs PVC between comparison
-    % Compare the same beat type between PAC and PVC groups (e.g., PAC+1 vs PVC+1)
-    config.stats.pac_vs_pvc = config.stats; % Copy base config
-    config.stats.pac_vs_pvc.beat_comparison = '+1'; % Beat type to compare (can be changed to any beat type: iN, -1, -2, -3, +1, +2, +3, etc.)
-    config.stats.pac_vs_pvc.beat_reference = '+1'; % Same beat type for reference group
-    config.stats.pac_vs_pvc.is_pac_pvc_comparison = true; % Flag to indicate this is a PAC vs PVC comparison
-    config.stats.pac_vs_pvc.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples for group comparison
+    % EEG channel configurations
+    % EEG uses: channel = {'all', '-ECG'}, minnbchan = 2
+    for i = 1:length(comparison_types)
+        comp_type = comparison_types{i};
+        config.stats.eeg.(comp_type) = config.stats.(comp_type);
+        config.stats.eeg.(comp_type).statistical_analysis.channel = {'all', '-ECG'};
+        config.stats.eeg.(comp_type).statistical_analysis.minnbchan = 2;
+    end
+
+    % ECG channel configurations
+    % ECG uses: channel = 'ECG', minnbchan = 0
+    for i = 1:length(comparison_types)
+        comp_type = comparison_types{i};
+        config.stats.ecg.(comp_type) = config.stats.(comp_type);
+        config.stats.ecg.(comp_type).statistical_analysis.channel = 'ECG';
+        config.stats.ecg.(comp_type).statistical_analysis.minnbchan = 0;
+    end
 
 end
