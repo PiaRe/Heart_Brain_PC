@@ -1,20 +1,22 @@
 function [source_comparison_ROI, source_reference_ROI] = ...
         reconstruct_sources_eloreta(comparison_data, reference_data, forward_model, ...
         centering_matrix, channels_to_remove, roi_voxel_indices, hep_roi_indices, ...
-        roi_signflip, time_window, aggregation_method)
+        roi_signflip, time_window, aggregation_method, reference_time_window)
     % RECONSTRUCT_SOURCES_ELORETA - Perform eLORETA source reconstruction
     %
     % Inputs:
-    %   comparison_data      - Cell array of comparison condition data (one per subject)
-    %   reference_data       - Cell array of reference condition data (one per subject)
-    %   forward_model        - eLORETA forward model matrix
-    %   centering_matrix     - Centering matrix for data preprocessing
-    %   channels_to_remove   - Channels to exclude from analysis
-    %   roi_voxel_indices    - Cell array of voxel indices for each ROI
-    %   hep_roi_indices      - Indices of HEP-relevant ROIs
-    %   roi_signflip         - Sign flip information for ROIs
-    %   time_window          - Time window for averaging [start, end] in seconds
-    %   aggregation_method   - Aggregation method ('avg' or 'avg-sf')
+    %   comparison_data          - Cell array of comparison condition data (one per subject)
+    %   reference_data           - Cell array of reference condition data (one per subject)
+    %   forward_model            - eLORETA forward model matrix
+    %   centering_matrix         - Centering matrix for data preprocessing
+    %   channels_to_remove       - Channels to exclude from analysis
+    %   roi_voxel_indices        - Cell array of voxel indices for each ROI
+    %   hep_roi_indices          - Indices of HEP-relevant ROIs
+    %   roi_signflip             - Sign flip information for ROIs
+    %   time_window              - Time window for comparison [start, end] in seconds
+    %   aggregation_method       - Aggregation method ('avg' or 'avg-sf')
+    %   reference_time_window    - (Optional) Different time window for reference [start, end]
+    %                              If not provided, uses same as comparison
     %
     % Outputs:
     %   source_comparison_ROI - Source activity in HEP ROIs for comparison (n_ROI x n_subjects)
@@ -22,6 +24,11 @@ function [source_comparison_ROI, source_reference_ROI] = ...
     %
     % Author: Pia Reinfeld
     % Date: 2025
+
+    % Handle optional reference time window
+    if nargin < 11 || isempty(reference_time_window)
+        reference_time_window = time_window;
+    end
 
     n_subjects = length(comparison_data);
     n_roi_hep = length(hep_roi_indices);
@@ -33,13 +40,17 @@ function [source_comparison_ROI, source_reference_ROI] = ...
     % Process each subject
     for subj = 1:n_subjects
 
-        % Get time indices for the specified window
-        time_vector = comparison_data{subj}.time;
-        time_idx = time_vector >= time_window(1) & time_vector <= time_window(2);
+        % Get time indices for comparison window
+        time_vector_comp = comparison_data{subj}.time;
+        time_idx_comp = time_vector_comp >= time_window(1) & time_vector_comp <= time_window(2);
 
-        % Extract and average data over time window
-        comparison_subj = mean(comparison_data{subj}.avg(:, time_idx), 2);
-        reference_subj = mean(reference_data{subj}.avg(:, time_idx), 2);
+        % Get time indices for reference window (may be different)
+        time_vector_ref = reference_data{subj}.time;
+        time_idx_ref = time_vector_ref >= reference_time_window(1) & time_vector_ref <= reference_time_window(2);
+
+        % Extract and average data over time windows
+        comparison_subj = mean(comparison_data{subj}.avg(:, time_idx_comp), 2);
+        reference_subj = mean(reference_data{subj}.avg(:, time_idx_ref), 2);
 
         % Remove excluded channels
         comparison_subj(channels_to_remove, :) = [];

@@ -185,4 +185,17 @@ function config = setup_project_config()
     config.source.pc_m3_vs_p1.group_select = 'PC'; % Both PAC and PVC combined
     config.source.pc_m3_vs_p1.time_window = [0.130, 0.200];
 
+    % Configuration 3: Time-resolved analysis - PC+1 vs PC-3 across sliding windows
+    config.source.timewise_pc_p1_vs_m3 = config.source.base;
+    config.source.timewise_pc_p1_vs_m3.group_select = 'PC';
+    config.source.timewise_pc_p1_vs_m3.pc_plus1_window = [0.130, 0.200]; % Fixed window for PC+1
+    config.source.timewise_pc_p1_vs_m3.pc_minus3_windows = {% Sliding windows for PC-3
+                                                            [0.130, 0.200], ... % Same window (baseline comparison)
+                                                                [0.200, 0.270], ...
+                                                                [0.270, 0.340], ...
+                                                                [0.340, 0.410], ...
+                                                                [0.410, 0.480], ...
+                                                                [0.480, 0.550], ...
+                                                                [0.550, 0.620]};
+
 end

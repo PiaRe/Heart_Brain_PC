@@ -108,6 +108,10 @@ function save_multiverse_source_figure(title_text, save_path, filename_base)
         colormap('parula');
     end
 
+    % Set color limits to 0-100 for percentage display
+    set(main_figure, 'Colormap', get(main_figure, 'Colormap'));
+    caxis([0 100]);
+
     % Add colorbar with descriptive label
     colorbar_handle = colorbar('Position', [0.86, 0.15, 0.03, 0.7]);
     colorbar_handle.FontSize = 10;
@@ -123,9 +127,9 @@ function save_multiverse_source_figure(title_text, save_path, filename_base)
 
     fprintf('Patience, saving the multiverse source figure in pdf format takes up to a few minutes');
     % Save as pdf
-    output_filepath = fullfile(save_path, [filename_base, '.pdf']);
+    output_filepath = fullfile(save_path, [filename_base, '.png']);
     exportgraphics(main_figure, output_filepath, ...
-        'ContentType', 'vector', ...
+        'ContentType', 'image', ...
         'BackgroundColor', 'none', ...
         'Resolution', 300);
 
