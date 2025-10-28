@@ -353,13 +353,13 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         end
 
         if is_pac_pvc_comparison
-            output_filename = sprintf('stats_ECG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
+            output_filename = sprintf('timedomain_ECG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
             comparison_desc = sprintf('PAC vs PVC (%s beats) - ECG', beat_comparison);
         elseif is_control_analysis
-            output_filename = sprintf('stats_ECG_PCvsControl_%s_%s%s.mat', beat_type, beat_comparison, downsample_suffix);
+            output_filename = sprintf('timedomain_ECG_PCvsControl_%s_%s%s.mat', beat_type, beat_comparison, downsample_suffix);
             comparison_desc = sprintf('PC vs Control (%s beats) - ECG', beat_comparison);
         else
-            output_filename = sprintf('stats_ECG_within_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
+            output_filename = sprintf('timedomain_ECG_within_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
             comparison_desc = sprintf('%s vs %s - ECG', beat_comparison, beat_reference);
         end
 

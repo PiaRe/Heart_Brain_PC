@@ -66,6 +66,8 @@ addpath(config.paths.heplab);
 addpath(config.paths.fieldtrip);
 addpath(genpath(config.paths.boundedline));
 addpath(config.paths.inpaintnan)
+addpath(config.paths.tensor)
+addpath(config.paths.brewermap)
 
 % Create all task directories - both PC and control groups
 dirs_to_create = {config.paths.raw_pc_data, config.paths.raw_control_data, ...
@@ -131,9 +133,9 @@ eeglab; close;
 %     config.hep.output_filename_pc);
 
 %% Step 6: Run statistics in time domain for EEG channel
-fprintf('Running step 6a: Running EEG statistics in time domain (within-group)\n');
-a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
+% fprintf('Running step 6a: Running EEG statistics in time domain (within-group)\n');
+% a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
 
 % fprintf('Running step 6b: EEG PAC vs PVC comparison analysis\n');
 % a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
@@ -149,9 +151,15 @@ a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_pat
 %     config.paths.output_path, config.stats.ecg.pac_vs_pvc, config.hep.output_filename_pc);
 
 %% Step 8: Source Space Analysis
-% fprintf('Running step 8: Source space analysis\n');
+fprintf('Running step 8a: Source space analysis - PVC -3 vs 0 (time window 0.22-0.35)\n');
+a_8_source_analysis(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+    config.paths.output_path, config.source.pvc_m3_vs_0, ...
+    config.hep.output_filename_pc);
+
+% fprintf('Running step 8b: Source space analysis - PC -3 vs +1 (time window 0.13-0.2)\n');
 % a_8_source_analysis(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-%     config.paths.output_path, config.source.settings);
+%     config.paths.output_path, config.source.pc_m3_vs_p1, ...
+%     config.hep.output_filename_pc);
 
 %% Step 9: Control Analysis - Correlation Analysis (CFA)
 % fprintf('Running step 9: Controlling for CFA - Correlation Analysis\n');

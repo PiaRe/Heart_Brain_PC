@@ -42,6 +42,8 @@ function config = setup_project_config()
     config.paths.fieldtrip = '/data/pt_02584/Patty/Toolboxes/fieldtrip-20220422/';
     config.paths.boundedline = '/data/p_02035/Matlab_codes/toolboxes/boundedline-pkg-master/boundedline/';
     config.paths.inpaintnan = '/data/p_02035/Matlab_codes/toolboxes/Inpaint_Nans-master/';
+    config.paths.tensor = '/data/p_02035/Matlab_codes/toolboxes/tensor_toolbox-v3.6/';
+    config.paths.brewermap = '/data/p_02035/Matlab_codes/toolboxes/BrewerMap-master/';
 
     %% Processing parameters
     config.processing.sampling_rate = 500;
@@ -151,5 +153,36 @@ function config = setup_project_config()
         config.stats.ecg.(comp_type).statistical_analysis.channel = 'ECG';
         config.stats.ecg.(comp_type).statistical_analysis.minnbchan = 0;
     end
+
+    %% SOURCE SPACE ANALYSIS (eLORETA)
+    % Configuration for source reconstruction using eLORETA
+
+    % Base source configuration
+    config.source.base.paths = config.paths;
+    config.source.base.hep_params = config.hep;
+    config.source.base.statistical_alpha = 0.05;
+    config.source.base.fdr_correction = true;
+
+    % Available regularization parameters for eLORETA forward models
+    % 0.5 = smooth (more distributed), 0.05 = standard (balanced), 0.001 = focal (more localized)
+    config.source.base.regularization_values = {0.5, 0.05, 0.001};
+
+    % Available aggregation methods for combining voxels within ROIs
+    % 'avg' = simple average, 'avg-sf' = average with sign correction (signflip)
+    config.source.base.agg_methods = {'avg', 'avg-sf'};
+
+    % Configuration 1: PVC -3 vs 0 in time window 0.22-0.35
+    config.source.pvc_m3_vs_0 = config.source.base;
+    config.source.pvc_m3_vs_0.beat_comparison = '0'; % PVC itself
+    config.source.pvc_m3_vs_0.beat_reference = '-3'; % PVC-3
+    config.source.pvc_m3_vs_0.group_select = 'PVC';
+    config.source.pvc_m3_vs_0.time_window = [0.220, 0.350];
+
+    % Configuration 2: PC -3 vs +1 in time window 0.13-0.2
+    config.source.pc_m3_vs_p1 = config.source.base;
+    config.source.pc_m3_vs_p1.beat_comparison = '+1'; % PC+1
+    config.source.pc_m3_vs_p1.beat_reference = '-3'; % PC-3
+    config.source.pc_m3_vs_p1.group_select = 'PC'; % Both PAC and PVC combined
+    config.source.pc_m3_vs_p1.time_window = [0.130, 0.200];
 
 end
