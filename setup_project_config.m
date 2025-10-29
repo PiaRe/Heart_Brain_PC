@@ -45,6 +45,7 @@ function config = setup_project_config()
     config.paths.inpaintnan = '/data/p_02035/Matlab_codes/toolboxes/Inpaint_Nans-master/';
     config.paths.tensor = '/data/p_02035/Matlab_codes/toolboxes/tensor_toolbox-v3.6/';
     config.paths.brewermap = '/data/p_02035/Matlab_codes/toolboxes/BrewerMap-master/';
+    config.paths.meth = '/data/pt_02584/Patty/premature_beats/scripts/source_modeling/meth/';
 
     %% Processing parameters
     config.processing.sampling_rate = 500;

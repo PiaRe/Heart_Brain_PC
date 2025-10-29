@@ -37,22 +37,20 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     %   - Adapted for HEP_ES project by Pia Reinfeld (2025)
     %   - Renamed for project-specific clarity and documentation
     %
-    % See also: save_multiverse_source_figure, showsurface3
+    % See also: save_multiverse_source_figure, showsurface_adapted
     %
     % Author: Pia Reinfeld
     % Date: 2025
-    % Project: Heart_Brain_PC (HEP_ES Analysis)
 
     %% Initialize figure settings
     set(0, 'DefaultFigureColor', [1 1 1]);
+    views_to_plot = [1, 2, 3, 4, 5, 8];
 
     %% Select surface vertices based on smoothing option
     if smooth_flag
         cortex_vertices = surface_atlas.cortex75K.vc_smooth;
-        smooth_suffix = '_smooth';
     else
         cortex_vertices = surface_atlas.cortex75K.vc;
-        smooth_suffix = '';
     end
 
     %% Configure surface plotting parameters
@@ -68,51 +66,6 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
         'printcbar', 1, ...
         'userticks', []);
 
-    %% Parse optional input arguments
-    % Default values
-    do_save = 1;
-    save_format = 'pdf'; % Changed default from 'epsc' to 'pdf' for HEP_ES project
-    save_name_specified = false;
-    save_name = 'hep_source';
-    views_to_plot = [1, 2, 3, 4, 5, 8]; % Default views for HEP analysis
-
-    % Check for valid name-value pairs
-    if (rem(length(varargin), 2) == 1)
-        error('visualize_hep_source_brain:InvalidInput', ...
-        'Optional parameters must be provided as name-value pairs');
-    end
-
-    % Parse name-value pairs
-    for i = 1:2:(length(varargin) - 1)
-
-        if ~ischar(varargin{i}) && ~isstring(varargin{i})
-            error('visualize_hep_source_brain:InvalidParameterName', ...
-                'Parameter names must be strings (parameter %d)', ceil(i / 2));
-        end
-
-        switch lower(varargin{i})
-            case 'views'
-                views_to_plot = varargin{i + 1};
-            case 'save'
-                do_save = varargin{i + 1};
-            case 'savename'
-                save_name_specified = true;
-                save_name = varargin{i + 1};
-            case 'saveformat'
-                save_format = varargin{i + 1};
-            otherwise
-                warning('visualize_hep_source_brain:UnknownParameter', ...
-                    'Unknown parameter: %s (ignoring)', varargin{i});
-        end
-
-    end
-
-    % Validate save settings
-    if do_save && ~save_name_specified
-        warning('visualize_hep_source_brain:NoSaveName', ...
-            'No filename specified for saving. Using default name: %s', save_name);
-    end
-
     %% Generate brain surface plots for each requested view
 
     % LEFT HEMISPHERE VIEWS
@@ -121,22 +74,14 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     % View 1: Left lateral
     if ismember(1, views_to_plot)
         figure('Name', 'Left Lateral View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri_left, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_left_lateral'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri_left, surface_params, source_data);
 
     end
 
     % View 2: Left medial
     if ismember(2, views_to_plot)
         figure('Name', 'Left Medial View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri_right, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_left_medial'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri_right, surface_params, source_data);
 
     end
 
@@ -146,22 +91,14 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     % View 3: Right lateral
     if ismember(3, views_to_plot)
         figure('Name', 'Right Lateral View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri_right, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_right_lateral'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri_right, surface_params, source_data);
 
     end
 
     % View 4: Right medial
     if ismember(4, views_to_plot)
         figure('Name', 'Right Medial View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri_left, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_right_medial'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri_left, surface_params, source_data);
 
     end
 
@@ -171,11 +108,7 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     % View 5: Dorsal (top view)
     if ismember(5, views_to_plot)
         figure('Name', 'Dorsal View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_dorsal'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
 
     end
 
@@ -184,11 +117,7 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
         surface_params.myviewdir = [-1e-10 0 1];
         surface_params.directions = [1 0 1 1 0 0];
         figure('Name', 'Dorsal Horizontal View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_dorsal_horizontal'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
 
         % Reset directions for other views
         surface_params.directions = [0 0 1 1 1 1];
@@ -200,11 +129,7 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     % View 7: Ventral (bottom view)
     if ismember(7, views_to_plot)
         figure('Name', 'Ventral View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_ventral'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
 
     end
 
@@ -212,18 +137,11 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     if ismember(8, views_to_plot)
         surface_params.myviewdir = [0 1e-10 -1];
         figure('Name', 'Ventral Horizontal View', 'NumberTitle', 'off');
-        showsurface3(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
-
-        if do_save
-            saveas(gcf, [save_name, '_ventral_horizontal'], save_format);
-        end
+        showsurface_adapted(cortex_vertices, surface_atlas.cortex75K.tri, surface_params, source_data);
 
     end
 
     %% Save colorbar scale
-    if do_save
-        saveas(gcf, [save_name, '_colorscale'], save_format);
-    end
 
     % Reset figure settings
     set(0, 'DefaultFigureColor', [1 1 1]);

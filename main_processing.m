@@ -58,9 +58,9 @@ config = setup_project_config();
 addpath(config.paths.eeglab);
 addpath([config.paths.base_code, 'functions']);
 addpath([config.paths.base_code, 'preprocessing/']);
-addpath([config.paths.base_code, 'stats/timedomain/']);
-addpath([config.paths.base_code, 'stats/sourcespace/']);
-addpath([config.paths.base_code, 'stats/controlanalysis/']);
+addpath([config.paths.base_code, 'timedomain/']);
+addpath([config.paths.base_code, 'sourcespace/']);
+addpath([config.paths.base_code, 'controlanalysis/']);
 addpath(config.paths.precomputed_path);
 
 addpath(config.paths.heplab);
@@ -69,6 +69,7 @@ addpath(genpath(config.paths.boundedline));
 addpath(config.paths.inpaintnan)
 addpath(config.paths.tensor)
 addpath(config.paths.brewermap)
+addpath(config.paths.meth)
 
 % Create all task directories - both PC and control groups
 dirs_to_create = {config.paths.raw_pc_data, config.paths.raw_control_data, ...

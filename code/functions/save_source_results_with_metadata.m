@@ -20,7 +20,6 @@ function save_source_results_with_metadata(results_table, metadata, save_path, f
     %
     % Author: Pia Reinfeld
     % Date: 2025
-    % Project: Heart_Brain_PC (HEP_ES Analysis)
 
     % Ensure save path exists
     if ~exist(save_path, 'dir')

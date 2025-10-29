@@ -84,7 +84,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
         centering_matrix = source_atlas.H;
         channels_to_remove = source_atlas.rem_chan;
         roi_voxel_indices = source_atlas.ind_ROI;
-        hep_roi_indices = source_atlas.ROI_HEP;
+        % hep_roi_indices not needed - we use all ROIs in timewise analysis
         roi_signflip = source_atlas.signflip;
         n_voxels = source_atlas.n_voxels;
         roi_labels = roi_atlas.HO_labels;
@@ -116,13 +116,15 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
         n_regularization = length(regularization_values);
         n_agg = length(agg_methods);
         n_pipelines = n_regularization * n_agg;
-        n_rois = length(hep_roi_indices);
+        % Use ALL ROIs instead of just HEP ROIs
+        all_roi_indices = 1:length(roi_voxel_indices);
+        n_rois = length(all_roi_indices);
 
-        % Clean ROI labels
+        % Clean ROI labels - use all ROIs
         roi_labels_clean = cellfun(@(x) strrep(x, ',', ''), roi_labels, 'UniformOutput', false);
         roi_labels_clean = cellfun(@(x) strrep(x, ' (formerly Supplementary Motor Cortex)', ''), ...
             roi_labels_clean, 'UniformOutput', false);
-        roi_labels_hep = roi_labels_clean(hep_roi_indices);
+        roi_labels_all = roi_labels_clean(all_roi_indices);
 
         % Storage for all time windows
         all_time_windows_pvalues = cell(n_time_windows, 1);
@@ -169,10 +171,11 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
                     %% Perform source reconstruction
                     % PC+1 always uses the fixed time window
                     % PC-3 uses the current sliding time window
+                    % Use ALL ROIs instead of just HEP ROIs
                     [source_pc_plus1_ROI, source_pc_minus3_ROI] = ...
                         reconstruct_sources_eloreta(pc_plus1_data, pc_minus3_data, ...
                         forward_model, centering_matrix, channels_to_remove, roi_voxel_indices, ...
-                        hep_roi_indices, roi_signflip, pc_plus1_window, agg_method, pc_minus3_window);
+                        all_roi_indices, roi_signflip, pc_plus1_window, agg_method, pc_minus3_window);
 
                     %% Statistical testing
                     [~, p_values, ~, ~] = ttest(source_pc_plus1_ROI, source_pc_minus3_ROI, ...
@@ -216,11 +219,11 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
             pc_minus3_window = pc_minus3_windows{tw};
             sig_pipeline_percentage = all_time_windows_percentages(tw, :);
 
-            % Map percentages to rois
+            % Map percentages to ALL ROIs (not just HEP ROIs)
             source_sig_visualization = zeros(n_voxels, 1);
 
             for i = 1:n_rois
-                roi_idx = hep_roi_indices(i);
+                roi_idx = all_roi_indices(i);
                 voxel_indices = roi_voxel_indices{roi_idx};
                 source_sig_visualization(voxel_indices) = sig_pipeline_percentage(i);
             end
@@ -249,7 +252,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
 
         % Create comprehensive results table for all time windows
         results_table = create_timewise_source_results_table(all_time_windows_pvalues, ...
-            pipeline_info, roi_labels_hep, pc_minus3_windows, statistical_alpha);
+            pipeline_info, roi_labels_all, pc_minus3_windows, statistical_alpha);
 
         % Create metadata
         metadata = create_timewise_source_metadata(source_config, n_subjects, n_pipelines, ...
@@ -267,7 +270,8 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
         save_data.all_time_windows_pvalues = all_time_windows_pvalues;
         save_data.all_time_windows_percentages = all_time_windows_percentages;
         save_data.pipeline_info = pipeline_info;
-        save_data.roi_labels_hep = roi_labels_hep;
+        save_data.roi_labels_all = roi_labels_all;
+        save_data.all_roi_indices = all_roi_indices;
         save_data.pc_plus1_window = pc_plus1_window;
         save_data.pc_minus3_windows = pc_minus3_windows;
         save_data.config_used = source_config;

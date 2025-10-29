@@ -20,6 +20,9 @@ function [roi_data, ev, w] = voxel2roi(voxel_data, agg_method, n_comps, signflip
     %     only if agg_method is 'svd')
 
     % explained variance and weights are meaningful only for SVD
+
+    % author: Nikolai Kapralov
+
     ev = 0;
     w = [];
 

@@ -22,7 +22,6 @@ function save_multiverse_source_figure(title_text, save_path, filename_base)
     %
     % Author: Pia Reinfeld
     % Date: 2025
-    % Project: Heart-Brain Coupling in Premature Contractions
 
     % Validate inputs
     if nargin < 3
@@ -48,26 +47,27 @@ function save_multiverse_source_figure(title_text, save_path, filename_base)
 
     % Collect and arrange all brain view plots
     for view_idx = 1:num_views
-        % Get the source figure
+        % Get the source figure and axis
         source_fig = figure(view_idx);
-        source_ax = gca;
-        source_children = get(source_ax, 'children');
+        source_ax = gca(source_fig);
 
         % Switch to main figure and create subplot
         figure(main_figure);
         subplot_handles(view_idx) = subplot(num_rows, num_views, view_idx);
 
-        % Copy graphics objects from source to subplot
-        copyobj(source_children, subplot_handles(view_idx));
-        axis off;
+        % Copy entire axis including all children at once (preserves patch data integrity)
+        copyobj(source_ax, subplot_handles(view_idx).Parent);
 
-        % Copy view properties from original plot
-        set(subplot_handles(view_idx), ...
-            'CLim', get(source_ax, 'CLim'), ...
-            'View', get(source_ax, 'View'), ...
-            'XLim', get(source_ax, 'XLim'), ...
-            'YLim', get(source_ax, 'YLim'), ...
-            'ZLim', get(source_ax, 'ZLim'));
+        % Get the newly copied axis (it's the last child)
+        all_axes = findobj(main_figure, 'Type', 'axes');
+        copied_ax = all_axes(1); % Most recently created
+
+        % Delete the original empty subplot and use the copied one
+        delete(subplot_handles(view_idx));
+        subplot_handles(view_idx) = copied_ax;
+
+        % Set axis properties
+        axis(subplot_handles(view_idx), 'off');
 
         % Set subplot dimensions based on view type
         if ismember(view_idx, [1, 2, 3, 4])
@@ -98,7 +98,6 @@ function save_multiverse_source_figure(title_text, save_path, filename_base)
 
         try
             color_steps = 100;
-            % ft_hastoolbox('brewermap', 1);
             colormap(brewermap(color_steps, 'BuGn')); % Blue-Green sequential colormap
         catch
             colormap('parula'); % Fallback to default
