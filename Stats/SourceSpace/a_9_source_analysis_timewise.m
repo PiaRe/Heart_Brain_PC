@@ -74,7 +74,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
         % Load eLORETA matrices and anatomical data
         source_atlas = load(fullfile(eloreta_path, 'settings', 'source_atlas_eloreta.mat'));
         roi_atlas = load(fullfile(eloreta_path, 'settings', 'roi_labels_harvard_oxford.mat'));
-        colormap_data = load(fullfile(eloreta_path, 'settings', 'colormap_17.mat'));
+        colormap_data = load(fullfile(eloreta_path, 'settings', 'cm17.mat'));
 
         % Extract needed variables
         cortex_surface = source_atlas.sa;
@@ -95,12 +95,8 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
         %% Load epoched data
         full_data_path = fullfile(epochs_path, input_filename);
 
-        if ~exist(full_data_path, 'file')
-            error('Data file not found: %s', full_data_path);
-        end
-
-        load(full_data_path, 'allsubj_PC');
-        fprintf('Loaded PC group data from: %s\n', input_filename);
+        % Use smart loading function to avoid redundant loading
+        [allsubj_PC, ~] = load_allsubj_data(full_data_path);
 
         %% Select group data
         group_data = allsubj_PC.(group_select);

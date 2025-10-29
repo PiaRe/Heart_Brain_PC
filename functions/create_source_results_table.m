@@ -17,28 +17,8 @@ function results_table = create_source_results_table(pipeline_pvalues, pipeline_
     n_rois = size(pipeline_pvalues, 2);
 
     % Create table columns from pipeline_info
-    regularization_values_num = cell2mat(pipeline_info(:, 1));
+    regularization_values = cell2mat(pipeline_info(:, 1));
     agg_methods = pipeline_info(:, 2);
-
-    % Create regularization labels based on values
-    regularization_labels = cell(size(regularization_values_num));
-
-    for i = 1:length(regularization_values_num)
-
-        if regularization_values_num(i) == 0.5
-            regularization_labels{i} = 'smooth';
-        elseif regularization_values_num(i) == 0.05
-            regularization_labels{i} = 'standard';
-        elseif regularization_values_num(i) == 0.001
-            regularization_labels{i} = 'focal';
-        else
-            regularization_labels{i} = sprintf('reg_%.3f', regularization_values_num(i));
-        end
-
-    end
-
-    % Convert regularization values to strings for table
-    regularization_values_str = cellfun(@num2str, pipeline_info(:, 1), 'UniformOutput', false);
 
     % Add p-values for each ROI
     roi_data = cell(1, n_rois);
@@ -57,8 +37,8 @@ function results_table = create_source_results_table(pipeline_pvalues, pipeline_
     end
 
     % Combine into table
-    results_table = table(regularization_values_str, regularization_labels, agg_methods, ...
-        'VariableNames', {'regularization_value', 'regularization_label', 'agg_method'});
+    results_table = table(regularization_values, agg_methods, ...
+        'VariableNames', {'regularization', 'agg_method'});
 
     % Add p-values
     for i = 1:n_rois

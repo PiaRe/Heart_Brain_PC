@@ -114,7 +114,7 @@ function config = setup_project_config()
     config.stats.within_group.statistical_analysis.statistic = 'ft_statfun_depsamplesT'; % Dependent samples
     config.stats.within_group.beat_comparison = 'iN'; % e.g., -3, +1, iN, 0 (0 = PC itself)
     config.stats.within_group.beat_reference = '-3'; % e.g., -3, +1, iN, 0
-    config.stats.within_group.group_select = 'PVC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
+    config.stats.within_group.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
 
     %% COMPARISON TYPE 2: PC vs Control (N beats)
     config.stats.pc_vs_control.statistical_analysis = config.stats.statistical_analysis_base;
@@ -128,8 +128,8 @@ function config = setup_project_config()
     %% COMPARISON TYPE 3: PAC vs PVC
     config.stats.pac_vs_pvc.statistical_analysis = config.stats.statistical_analysis_base;
     config.stats.pac_vs_pvc.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples
-    config.stats.pac_vs_pvc.beat_comparison = 'iN';
-    config.stats.pac_vs_pvc.beat_reference = 'iN';
+    config.stats.pac_vs_pvc.beat_comparison = '+1';
+    config.stats.pac_vs_pvc.beat_reference = '+1';
     config.stats.pac_vs_pvc.is_pac_pvc_comparison = true;
 
     %% CHANNEL-SPECIFIC CONFIGURATIONS

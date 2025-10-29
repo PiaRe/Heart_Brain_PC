@@ -59,14 +59,6 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
 
         full_data_path = fullfile(epochs_path, input_filename);
 
-        if ~exist(full_data_path, 'file')
-            error('Data file not found: %s', full_data_path);
-        end
-
-        % Load PC group data (variable is named allsubj_PC in the file)
-        load(full_data_path, 'allsubj_PC');
-        fprintf('Loaded PC group data from: %s\n', input_filename);
-
         % Load control group data if this is a control comparison
         if is_control_analysis
 
@@ -76,16 +68,13 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
 
             % Get control filename from config
             control_filename = stats_config.control_filename;
-
             control_file = fullfile(epochs_path_control, control_filename);
 
-            if ~exist(control_file, 'file')
-                error('Control group data file not found: %s', control_file);
-            end
-
-            % Load control group data
-            load(control_file, 'allsubj_control');
-            fprintf('Loaded control group data from: %s\n', control_filename);
+            % Use smart loading function to avoid redundant loading
+            [allsubj_PC, allsubj_control] = load_allsubj_data(full_data_path, 'ControlFile', control_file);
+        else
+            % Use smart loading function for PC data only
+            [allsubj_PC, ~] = load_allsubj_data(full_data_path);
         end
 
         % Select group data based on configuration

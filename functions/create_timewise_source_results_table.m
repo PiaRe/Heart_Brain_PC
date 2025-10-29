@@ -32,27 +32,11 @@ function results_table = create_timewise_source_results_table(all_time_windows_p
 
     % Pre-allocate cell arrays for table columns
     time_window_col = cell(n_total_rows, 1);
-    regularization_values_col = cell(n_total_rows, 1);
-    regularization_labels_col = cell(n_total_rows, 1);
+    regularization_col = zeros(n_total_rows, 1);
     agg_methods_col = cell(n_total_rows, 1);
 
-    % Create regularization labels
-    regularization_values_num = cell2mat(pipeline_info(:, 1));
-    regularization_labels = cell(n_pipelines, 1);
-
-    for i = 1:n_pipelines
-
-        if regularization_values_num(i) == 0.5
-            regularization_labels{i} = 'smooth';
-        elseif regularization_values_num(i) == 0.05
-            regularization_labels{i} = 'standard';
-        elseif regularization_values_num(i) == 0.001
-            regularization_labels{i} = 'focal';
-        else
-            regularization_labels{i} = sprintf('reg_%.3f', regularization_values_num(i));
-        end
-
-    end
+    % Get regularization values
+    regularization_values = cell2mat(pipeline_info(:, 1));
 
     % Fill in metadata columns and collect ROI data
     roi_pvalues = zeros(n_total_rows, n_rois);
@@ -65,8 +49,7 @@ function results_table = create_timewise_source_results_table(all_time_windows_p
             row_idx = row_idx + 1;
 
             time_window_col{row_idx} = time_window_labels{tw};
-            regularization_values_col{row_idx} = num2str(pipeline_info{p, 1});
-            regularization_labels_col{row_idx} = regularization_labels{p};
+            regularization_col(row_idx) = regularization_values(p);
             agg_methods_col{row_idx} = pipeline_info{p, 2};
 
             roi_pvalues(row_idx, :) = pipeline_pvalues(p, :);
@@ -75,9 +58,8 @@ function results_table = create_timewise_source_results_table(all_time_windows_p
     end
 
     % Create base table
-    results_table = table(time_window_col, regularization_values_col, regularization_labels_col, ...
-        agg_methods_col, 'VariableNames', ...
-        {'time_window_PCm3', 'regularization_value', 'regularization_label', 'agg_method'});
+    results_table = table(time_window_col, regularization_col, agg_methods_col, ...
+        'VariableNames', {'time_window_PCm3', 'regularization', 'agg_method'});
 
     % Add p-values for each ROI
     for i = 1:n_rois
