@@ -68,12 +68,12 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
 
         %% Load required files
         fprintf('Loading eLORETA forward models...\n');
-        eloreta_path = source_config.paths.base_code;
+        precomputed_path = source_config.paths.precomputed_path;
 
         % Load eLORETA matrices and anatomical data
-        source_atlas = load(fullfile(eloreta_path, 'settings', 'source_atlas_eloreta.mat'));
-        roi_atlas = load(fullfile(eloreta_path, 'settings', 'roi_labels_harvard_oxford.mat'));
-        colormap_data = load(fullfile(eloreta_path, 'settings', 'cm17.mat'));
+        source_atlas = load(fullfile(precomputed_path, 'source_atlas_eloreta.mat'));
+        roi_atlas = load(fullfile(precomputed_path, 'roi_labels_harvard_oxford.mat'));
+        colormap_data = load(fullfile(precomputed_path, 'cm17.mat'));
 
         % Extract needed variables
         cortex_surface = source_atlas.sa;

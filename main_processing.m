@@ -57,10 +57,11 @@ config = setup_project_config();
 % Add required paths
 addpath(config.paths.eeglab);
 addpath([config.paths.base_code, 'functions']);
-addpath([config.paths.base_code, 'Preprocessing/']);
-addpath([config.paths.base_code, 'Stats/Timedomain/']);
-addpath([config.paths.base_code, 'Stats/SourceSpace/']);
-addpath([config.paths.base_code, 'Stats/ControlAnalysis/']);
+addpath([config.paths.base_code, 'preprocessing/']);
+addpath([config.paths.base_code, 'stats/timedomain/']);
+addpath([config.paths.base_code, 'stats/sourcespace/']);
+addpath([config.paths.base_code, 'stats/controlanalysis/']);
+addpath(config.paths.precomputed_path);
 
 addpath(config.paths.heplab);
 addpath(config.paths.fieldtrip);
@@ -77,7 +78,7 @@ dirs_to_create = {config.paths.raw_pc_data, config.paths.raw_control_data, ...
                       config.paths.post_ica_pc_path, config.paths.post_ica_control_path, ...
                       config.paths.epochs_pc_path, config.paths.epochs_control_path, ...
                       config.paths.output_path, config.paths.qa_path, config.paths.error_log_path, ...
-                      config.paths.settings_path};
+                      config.paths.precomputed_path};
 create_dirs(dirs_to_create);
 
 % Initialize EEGLAB
@@ -143,23 +144,22 @@ eeglab; close;
 %     output_filename_pc_no_ica);
 
 %% Step 6: Run statistics in time domain for EEG channel
-% Use the appropriate filename based on config.hep.ica_status
-fprintf('Running step 6a: Running EEG statistics in time domain (within-group) with ica_status=%s\n', config.hep.ica_status);
-a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
+% fprintf('Running step 6a: Running EEG statistics in time domain (within-group) with ica_status=%s\n', config.hep.ica_status);
+% a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
 
-fprintf('Running step 6b: EEG PAC vs PVC comparison analysis with ica_status=%s\n', config.hep.ica_status);
-a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.eeg.pac_vs_pvc, config.hep.output_filename_pc);
+% fprintf('Running step 6b: EEG PAC vs PVC comparison analysis with ica_status=%s\n', config.hep.ica_status);
+% a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.eeg.pac_vs_pvc, config.hep.output_filename_pc);
 
 %% Step 7: Run statistics in time domain for ECG channel
-fprintf('Running step 7a: Running ECG statistics in time domain (within-group) with ica_status=%s\n', config.hep.ica_status);
-a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.ecg.within_group, config.hep.output_filename_pc);
+% fprintf('Running step 7a: Running ECG statistics in time domain (within-group) with ica_status=%s\n', config.hep.ica_status);
+% a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.ecg.within_group, config.hep.output_filename_pc);
 
-fprintf('Running step 7b: ECG PAC vs PVC comparison analysis with ica_status=%s\n', config.hep.ica_status);
-a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.ecg.pac_vs_pvc, config.hep.output_filename_pc);
+% fprintf('Running step 7b: ECG PAC vs PVC comparison analysis with ica_status=%s\n', config.hep.ica_status);
+% a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
+%     config.paths.output_path, config.stats.ecg.pac_vs_pvc, config.hep.output_filename_pc);
 
 %% Step 8: Source Space Analysis
 fprintf('Running step 8a: Source space analysis - PVC -3 vs 0 (time window 0.22-0.35) with ica_status=%s\n', config.hep.ica_status);

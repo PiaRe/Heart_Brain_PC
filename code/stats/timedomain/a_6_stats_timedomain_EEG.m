@@ -1,9 +1,8 @@
-function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stats_config, input_filename, epochs_path_control)
-    % A_7_STATS_TIMEDOMAIN_ECG - Statistical analysis of ECG channel in time domain
+function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stats_config, input_filename, epochs_path_control)
+    % A_6_STATS_TIMEDOMAIN_EEG - Statistical analysis of HEP in time domain
     %
-    % This function performs statistical analysis of the ECG channel
+    % This function performs statistical analysis of heartbeat evoked potentials
     % in the time domain using cluster-based permutation testing.
-    % Unlike a_5_stats_timedomain_EEG, this focuses solely on the ECG channel.
     %
     % Inputs:
     %   epochs_path         - Path to epoched data files (PC group or main data)
@@ -13,12 +12,12 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
     %   input_filename     - Name of the input file to load
     %   epochs_path_control - Optional: Path to control group data for group comparison
     %
-    % The function loads epoched data, performs statistical comparisons on ECG channel,
-    % and saves results with simplified plotting (using plot_cluster_averaged for pos/neg clusters).
+    % The function loads epoched data, performs statistical comparisons based
+    % on the configured parameters, and saves results.
     %
     % Author: Pia Reinfeld
 
-    fprintf('Starting ECG time domain statistical analysis...\n');
+    fprintf('Starting time domain statistical analysis...\n');
 
     try
         %% Extract configuration parameters
@@ -51,9 +50,11 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         fprintf('  Control analysis: %s\n', mat2str(is_control_analysis));
         fprintf('  PAC vs PVC comparison: %s\n', mat2str(is_pac_pvc_comparison));
 
-        %% Load layout for statistical analysis
-        settings_path = stat_params.paths.settings_path;
-        load(fullfile(settings_path, 'layout.mat'), 'layout');
+        %% Load layout and neighbours for statistical analysis
+        precomputed_path = stat_params.paths.precomputed_path;
+        load(fullfile(precomputed_path, 'layout.mat'), 'layout');
+        load(fullfile(precomputed_path, 'neighbours.mat'), 'neighbours');
+        fprintf('Loaded layout and neighbours from: %s\n', precomputed_path);
 
         %% Setup paths and parameters
 
@@ -151,7 +152,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
             for i = 1:length(non_iN_data)
 
                 if isfield(non_iN_data{i}, 'trial')
-                    non_iN_trial_counts(i) = length(non_iN_data{i}.trial);
+                    non_iN_trial_counts(i) = size(non_iN_data{i}.trial, 1);
                 end
 
             end
@@ -162,7 +163,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
             for i = 1:length(iN_data)
 
                 if isfield(iN_data{i}, 'trial')
-                    iN_trial_counts(i) = length(iN_data{i}.trial);
+                    iN_trial_counts(i) = size(iN_data{i}.trial, 1);
                 end
 
             end
@@ -299,12 +300,10 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         cfg.clustertail = stat_params.clustertail;
         cfg.alpha = stat_params.alpha;
         cfg.numrandomization = stat_params.numrandomization;
-        cfg.channel = stat_params.channel; % Should be 'ECG' from config
+        cfg.channel = stat_params.channel;
         cfg.latency = stat_params.latency;
+        cfg.neighbours = neighbours;
         cfg.layout = layout;
-
-        % No neighbours needed for single channel ECG analysis
-        cfg.neighbours = [];
 
         % Design matrix - different for independent vs dependent samples
         if is_control_analysis || is_pac_pvc_comparison
@@ -330,7 +329,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         end
 
         %% Run statistical analysis
-        fprintf('Running cluster-based permutation test on ECG channel...\n');
+        fprintf('Running cluster-based permutation test...\n');
         [stat] = ft_timelockstatistics(cfg, comparison_data{:}, reference_data{:});
 
         %% Save results
@@ -342,14 +341,14 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         end
 
         if is_pac_pvc_comparison
-            output_filename = sprintf('timedomain_ECG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
-            comparison_desc = sprintf('PAC vs PVC (%s beats) - ECG', beat_comparison);
+            output_filename = sprintf('timedomain_EEG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
+            comparison_desc = sprintf('PAC vs PVC (%s beats)', beat_comparison);
         elseif is_control_analysis
-            output_filename = sprintf('timedomain_ECG_PCvsControl_%s_%s%s.mat', beat_type, beat_comparison, downsample_suffix);
-            comparison_desc = sprintf('PC vs Control (%s beats) - ECG', beat_comparison);
+            output_filename = sprintf('timedomain_EEG_PCvsControl_%s_%s%s.mat', beat_type, beat_comparison, downsample_suffix);
+            comparison_desc = sprintf('PC vs Control (%s beats)', beat_comparison);
         else
-            output_filename = sprintf('timedomain_ECG_within_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
-            comparison_desc = sprintf('%s vs %s - ECG', beat_comparison, beat_reference);
+            output_filename = sprintf('timedomain_EEG_within_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
+            comparison_desc = sprintf('%s vs %s', beat_comparison, beat_reference);
         end
 
         output_file_path = fullfile(output_path, output_filename);
@@ -388,7 +387,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         % Prepare metadata for CSV export
         metadata = struct();
         metadata.comparison_desc = comparison_desc;
-        metadata.modality = 'ECG';
+        metadata.modality = 'EEG';
         metadata.beat_comparison = beat_comparison;
         metadata.beat_reference = beat_reference;
         metadata.beat_type = beat_type;
@@ -429,7 +428,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         save_cluster_specifications(stat, output_path, base_filename, metadata);
 
         %% Generate plots
-        fprintf('Generating ECG plots...\n');
+        fprintf('Generating plots...\n');
 
         % Generate automatic labels
         [comparison_label, reference_label] = create_condition_labels(beat_comparison, beat_reference, ...
@@ -439,48 +438,66 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         cfg_ga = [];
         cfg_ga.latency = stat_params.latency;
         cfg_ga.parameter = 'avg';
-        cfg_ga.channel = stat_params.channel; % ECG channel
+        cfg_ga.channel = {'all', '-ECG'};
 
         comparison_data_ga = ft_timelockgrandaverage(cfg_ga, comparison_data{:});
         reference_data_ga = ft_timelockgrandaverage(cfg_ga, reference_data{:});
 
+        % Compute difference (for topoplots)
+        cfg_diff = [];
+        cfg_diff.operation = 'subtract';
+        cfg_diff.parameter = 'avg';
+        difference_data_ga = ft_math(cfg_diff, comparison_data_ga, reference_data_ga);
+
         % Get number of subjects for SEM calculation
         n_subjects = length(comparison_data);
 
-        % Get cluster number
+        % Get time ROI for plotting
+        time_roi_plot = stat_params.latency;
+
+        % 1. Create multiplot with statistical results
+        fprintf('  Creating multiplot...\n');
+        plot_multiplot_stats(stat, comparison_data_ga, reference_data_ga, ...
+            comparison_label, reference_label, layout, time_roi_plot, ...
+            output_path, base_filename);
+
+        % 2. Plot cluster-averaged ERPs for positive and negative clusters
         cluster_num = 1; % Default to first cluster
 
         if isfield(stats_config, 'cluster_num')
             cluster_num = stats_config.cluster_num;
         end
 
-        % Get time ROI for plotting
-        time_roi_plot = stat_params.latency;
-
-        % Plot using plot_cluster_averaged for positive and negative clusters
-        fprintf('  Creating ECG cluster-averaged plots...\n');
-
-        % Positive cluster plot
-        fprintf('    Plotting positive cluster...\n');
+        fprintf('  Creating cluster-averaged plots...\n');
+        % Positive clusters
         plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, ...
             comparison_label, reference_label, time_roi_plot, output_path, ...
             base_filename, 'pos', cluster_num, n_subjects);
 
-        % Negative cluster plot
-        fprintf('    Plotting negative cluster...\n');
+        % Negative clusters
         plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, ...
             comparison_label, reference_label, time_roi_plot, output_path, ...
             base_filename, 'neg', cluster_num, n_subjects);
 
-        fprintf('ECG plots completed successfully.\n');
-        fprintf('ECG time domain statistical analysis completed successfully.\n');
+        % 3. Plot topographies for both cluster polarities
+        fprintf('  Creating topographical plots...\n');
+        % Positive clusters
+        plot_topomap_comparison(stat, comparison_data_ga, reference_data_ga, ...
+            difference_data_ga, comparison_label, reference_label, ...
+            comparison_data_ga.time, output_path, base_filename, 'pos', cluster_num, layout);
+
+        % Negative clusters
+        plot_topomap_comparison(stat, comparison_data_ga, reference_data_ga, ...
+            difference_data_ga, comparison_label, reference_label, ...
+            comparison_data_ga.time, output_path, base_filename, 'neg', cluster_num, layout);
+
+        fprintf('Plots completed successfully.\n');
+        fprintf('Time domain statistical analysis completed successfully.\n');
 
     catch ME
-        error_msg = sprintf('Error in a_7_stats_timedomain_ECG: %s\n%s', ME.message, getReport(ME));
-        fprintf('%s\n', error_msg);
-
-        % Log error
-        error_file = fullfile(error_log_path, sprintf('stats_ECG_timedomain_error_%s.txt', datestr(now, 'yyyymmdd_HHMMSS')));
+        error_msg = sprintf('Error in a_6_stats_timedomain_EEG: %s\n%s', ME.message, getReport(ME));
+        fprintf('%s\n', error_msg); % Log error
+        error_file = fullfile(error_log_path, sprintf('stats_timedomain_error_%s.txt', datestr(now, 'yyyymmdd_HHMMSS')));
         fid = fopen(error_file, 'w');
 
         if fid > 0

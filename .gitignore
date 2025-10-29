@@ -1,6 +1,8 @@
 # Project-specific directories
 data/
 **/data/
+results/
+**/logfiles/
 
 # MATLAB specific
 *.asv

@@ -15,10 +15,11 @@ function config = setup_project_config()
     config = struct();
 
     %% Base paths
-    config.paths.base_code = '/data/pt_02778/HEP_ES/Heart_Brain_PC/';
-    config.paths.base_data = [config.paths.base_code, 'data/'];
+    config.paths.base = '/data/pt_02778/HEP_ES/Heart_Brain_PC/';
+    config.paths.base_code = [config.paths.base 'code/'];
+    config.paths.base_data = [config.paths.base, 'data/'];
 
-    %% Data paths (using consistent naming)
+    %% Data paths
     config.paths.raw_pc_data = [config.paths.base_data, 'raw/PC/'];
     config.paths.raw_control_data = [config.paths.base_data, 'raw/control/'];
     config.paths.crop_marker_path = [config.paths.base_data, 'raw/crop_marker/'];
@@ -31,10 +32,10 @@ function config = setup_project_config()
     config.paths.post_ica_control_path = [config.paths.base_data, 'ICA/post/control/'];
     config.paths.epochs_pc_path = [config.paths.base_data, 'epochs/PC/'];
     config.paths.epochs_control_path = [config.paths.base_data, 'epochs/control/'];
-    config.paths.output_path = [config.paths.base_data, 'output/'];
+    config.paths.output_path = [config.paths.base, 'results/'];
     config.paths.qa_path = [config.paths.base_data, 'QA/'];
-    config.paths.error_log_path = [config.paths.base_data, 'Logfiles/'];
-    config.paths.settings_path = [config.paths.base_code, 'settings/'];
+    config.paths.error_log_path = [config.paths.base_code, 'logfiles/'];
+    config.paths.precomputed_path = [config.paths.base, 'precomputed/'];
 
     %% External toolbox paths
     config.paths.eeglab = '/data/pt_02584/Patty/Toolboxes/eeglab2021.1/';
@@ -116,7 +117,14 @@ function config = setup_project_config()
     config.stats.within_group.beat_reference = '-3'; % e.g., -3, +1, iN, 0
     config.stats.within_group.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
 
-    %% COMPARISON TYPE 2: PC vs Control (N beats)
+    %% COMPARISON TYPE 2: PAC vs PVC
+    config.stats.pac_vs_pvc.statistical_analysis = config.stats.statistical_analysis_base;
+    config.stats.pac_vs_pvc.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples
+    config.stats.pac_vs_pvc.beat_comparison = '+1';
+    config.stats.pac_vs_pvc.beat_reference = '+1';
+    config.stats.pac_vs_pvc.is_pac_pvc_comparison = true;
+
+    %% COMPARISON TYPE 3: PC vs Control (N beats)
     config.stats.pc_vs_control.statistical_analysis = config.stats.statistical_analysis_base;
     config.stats.pc_vs_control.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples
     config.stats.pc_vs_control.beat_comparison = 'iN'; % iN beats from PC group
@@ -124,13 +132,6 @@ function config = setup_project_config()
     config.stats.pc_vs_control.is_control_analysis = true;
     config.stats.pc_vs_control.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
     config.stats.pc_vs_control.control_filename = config.hep.output_filename_control;
-
-    %% COMPARISON TYPE 3: PAC vs PVC
-    config.stats.pac_vs_pvc.statistical_analysis = config.stats.statistical_analysis_base;
-    config.stats.pac_vs_pvc.statistical_analysis.statistic = 'ft_statfun_indepsamplesT'; % Independent samples
-    config.stats.pac_vs_pvc.beat_comparison = '+1';
-    config.stats.pac_vs_pvc.beat_reference = '+1';
-    config.stats.pac_vs_pvc.is_pac_pvc_comparison = true;
 
     %% CHANNEL-SPECIFIC CONFIGURATIONS
     % Create separate namespaces for EEG and ECG analyses
