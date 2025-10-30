@@ -62,7 +62,7 @@ function a_10_twave_control(epochs_path, error_log_path, output_path, twave_sett
         fprintf(2, '%s\n', error_msg);
 
         % Log error
-        error_log_file = fullfile(error_log_path, sprintf('twave_control_error_%s.txt', datestr(now, 'yyyymmdd_HHMMSS')));
+        error_log_file = fullfile(error_log_path, sprintf('twave_control_error_%s.txt', char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'))));
         fid = fopen(error_log_file, 'w');
         fprintf(fid, '%s', error_msg);
         fclose(fid);

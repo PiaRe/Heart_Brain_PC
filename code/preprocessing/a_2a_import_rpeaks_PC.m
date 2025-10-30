@@ -1,5 +1,5 @@
-function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path, error_log_path, analysis_beat_types, raw_file_labels)
-    % A_2_IMPORT_EVENTS - Import and process ECG event markers for premature beats
+function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_config)
+    % A_2A_IMPORT_RPEAKS_PC - Import and process ECG event markers for premature beats
     %
     % This function imports ECG event markers from text files and processes them
     % to identify and classify different types of heartbeats including:
@@ -13,14 +13,15 @@ function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path
     %
     % Inputs:
     %   preprocessed_data_path - Path to directory containing preprocessed EEG .set files (string)
-    %   event_data_path       - Path to directory containing ECG event .txt files (string)
-    %   pre_ica_path          - Path to directory for saving processed files (string)
-    %   error_log_path        - Path to directory for saving error logs (string)
-    %   analysis_beat_types   - Beat types to consider for this analysis
-    %   raw_file_labels       - Beat types as they appear in raw table
+    %   output_path           - Path to directory for saving processed files (string)
+    %   import_config         - Structure containing import configuration:
+    %       .event_data_path       - Path to ECG event .txt files
+    %       .error_log_path        - Path for saving error logs
+    %       .analysis_beat_types   - Beat types to consider for analysis
+    %       .raw_file_labels       - Beat types as they appear in raw table
     %
     % Outputs:
-    %   - EEG files with imported and processed events saved to pre_ica_path
+    %   - EEG files with imported and processed events saved to output_path
     %   - counter_ES.mat file with statistics on detected events
     %   - Console output with processing status
     %   - Error logs saved to error_log_path if processing fails
@@ -28,6 +29,12 @@ function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path
     % Author: Pia Reinfeld
 
     fprintf('Starting ECG event import and processing...\n');
+
+    %% Extract parameters from config
+    event_data_path = import_config.event_data_path;
+    error_log_path = import_config.error_log_path;
+    analysis_beat_types = import_config.analysis_beat_types;
+    raw_file_labels = import_config.raw_file_labels;
 
     % Initialize variables
     EEGfiles = dir(fullfile(preprocessed_data_path, '*.set'));
@@ -179,7 +186,7 @@ function a_2_import_events(preprocessed_data_path, event_data_path, pre_ica_path
                 EEG = eeg_checkset(EEG);
 
                 % Save processed EEG file
-                pop_saveset(EEG, 'filename', [fileName '.set'], 'filepath', pre_ica_path);
+                pop_saveset(EEG, 'filename', [fileName '.set'], 'filepath', output_path);
 
             else
                 % Event file not found

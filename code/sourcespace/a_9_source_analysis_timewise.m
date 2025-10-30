@@ -237,7 +237,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
             % Generate source analysis  plot
             visualize_hep_source_brain(cortex_surface, ...
                 source_sig_visualization(cortex_surface.cortex5K.in_to_cortex75K_geod), ...
-                [0 100], colormap_brain, 'xx', 1, 'views', [1, 2, 3, 4, 5, 8], 'save', 0);
+                [0 100], colormap_brain, 1, 'views', [1, 2, 3, 4, 5, 8], 'save', 0);
 
             % Save figure
             output_filename_base = sprintf('sourcespace_timewise_%s_+1_vs_-3_tw%d', ...
@@ -276,7 +276,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
         save_data.pc_minus3_windows = pc_minus3_windows;
         save_data.config_used = source_config;
         save_data.metadata = metadata;
-        save_data.analysis_date = datestr(now);
+        save_data.analysis_date = char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'));
 
         save(fullfile(output_path, save_filename), 'save_data');
         fprintf('MATLAB results saved to: %s\n', save_filename);
@@ -290,7 +290,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
 
         % Log error
         error_log_file = fullfile(error_log_path, sprintf('source_timewise_error_%s.txt', ...
-            datestr(now, 'yyyymmdd_HHMMSS')));
+            char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'))));
         fid = fopen(error_log_file, 'w');
         fprintf(fid, '%s', error_msg);
         fclose(fid);

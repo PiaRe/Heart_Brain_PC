@@ -1,4 +1,4 @@
-function visualize_hep_source_brain(surface_atlas, source_data, color_limits, colormap_brain, unit, smooth_flag, varargin)
+function visualize_hep_source_brain(surface_atlas, source_data, color_limits, colormap_brain, smooth_flag, varargin)
     % VISUALIZE_HEP_SOURCE_BRAIN - Visualize HEP source reconstruction results on brain surface
     %
     % This function creates multiple views of brain surface visualizations with
@@ -6,14 +6,13 @@ function visualize_hep_source_brain(surface_atlas, source_data, color_limits, co
     %
     % Syntax:
     %   visualize_hep_source_brain(surface_atlas, source_data, color_limits, ...
-    %                              colormap_brain, unit, smooth_flag, varargin)
+    %                              colormap_brain, smooth_flag, varargin)
     %
     % Inputs:
     %   surface_atlas   - Structure containing cortical surface information (sa)
     %   source_data     - Source activity values to be plotted on the surface
     %   color_limits    - [min, max] color scale limits for visualization
     %   colormap_brain  - Colormap to use for plotting (e.g., cm17, cm9)
-    %   unit            - String describing the unit of the data (e.g., 'xx')
     %   smooth_flag     - Boolean (1/0): use smoothed or standard surface
     %
     % Optional Parameters (Name-Value pairs):

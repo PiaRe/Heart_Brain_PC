@@ -38,7 +38,7 @@ function save_cluster_specifications(stat, savepath, savefile, metadata)
     if nargin >= 4 && ~isempty(metadata)
         fprintf(fid, '# ====== ANALYSIS METADATA ======\n');
         fprintf(fid, '# Analysis: %s\n', getfield_or_default(metadata, 'comparison_desc', 'N/A'));
-        fprintf(fid, '# Date: %s\n', getfield_or_default(metadata, 'analysis_date', datestr(now)));
+        fprintf(fid, '# Date: %s\n', getfield_or_default(metadata, 'analysis_date', char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'))));
         fprintf(fid, '# Modality: %s\n', getfield_or_default(metadata, 'modality', 'N/A'));
         fprintf(fid, '#\n');
         fprintf(fid, '# --- Comparison Details ---\n');

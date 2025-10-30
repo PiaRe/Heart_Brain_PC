@@ -365,7 +365,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         save_data.is_control_analysis = is_control_analysis;
         save_data.is_pac_pvc_comparison = is_pac_pvc_comparison;
         save_data.downsampling_info = downsampling_info;
-        save_data.analysis_date = datestr(now);
+        save_data.analysis_date = char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'));
 
         save(output_file_path, 'save_data');
         fprintf('Results saved to: %s\n', output_file_path);
@@ -393,7 +393,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         metadata.beat_reference = beat_reference;
         metadata.beat_type = beat_type;
         metadata.n_subjects = length(comparison_data);
-        metadata.analysis_date = datestr(now);
+        metadata.analysis_date = char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'));
 
         % HEP/Preprocessing parameters from statistical_analysis config (inherited from base)
         if isfield(stat_params, 'hep_params')
@@ -480,7 +480,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
         fprintf('%s\n', error_msg);
 
         % Log error
-        error_file = fullfile(error_log_path, sprintf('stats_ECG_timedomain_error_%s.txt', datestr(now, 'yyyymmdd_HHMMSS')));
+        error_file = fullfile(error_log_path, sprintf('stats_ECG_timedomain_error_%s.txt', char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'))));
         fid = fopen(error_file, 'w');
 
         if fid > 0

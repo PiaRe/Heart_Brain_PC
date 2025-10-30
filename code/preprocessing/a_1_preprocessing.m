@@ -1,4 +1,4 @@
-function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_path, error_log_path, sampling_rate, electrode_file, highpass_cutoff, lowpass_cutoff, line_noise_frequency, flatline_criterion, artifact_threshold)
+function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     % A_1_PREPROCESSING - Initial preprocessing and ICA
     %
     % This function performs the initial preprocessing steps including:
@@ -10,20 +10,32 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
     %
     % Inputs:
     %   raw_data_path         - Path to directory containing raw EEG files (string)
-    %   crop_marker_path      - Path to directory containing crop marker files (string)
     %   preprocessed_data_path - Path to directory for saving preprocessed EEG files (string)
-    %   error_log_path        - Path to directory containing error logs (string)
-    %   sampling_rate         - Target sampling rate for downsampling (double)
-    %   electrode_file        - Path to electrode montage file (string)
-    %   highpass_cutoff       - High-pass filter cutoff (double)
-    %   lowpass_cutoff        - Low-pass filter cutoff (double)
-    %   line_noise_frequency  - Line noise frequency for notch filtering (e.g., 50 Hz or 60 Hz) (double)
-    %   flatline_criterion    - Criterion for detecting flatline channels (double)
-    %   artifact_threshold    - Threshold to exclude artifacts (double)
+    %   prepro_config         - Structure containing preprocessing configuration:
+    %       .crop_marker_path      - Path to crop marker files
+    %       .error_log_path        - Path for error logs
+    %       .sampling_rate         - Target sampling rate for downsampling
+    %       .electrode_file        - Path to electrode montage file
+    %       .highpass_cutoff       - High-pass filter cutoff
+    %       .lowpass_cutoff        - Low-pass filter cutoff
+    %       .line_noise_frequency  - Line noise frequency for notch filtering
+    %       .flatline_criterion    - Criterion for detecting flatline channels
+    %       .artifact_threshold    - Threshold to exclude artifacts
     %
     % Author: Pia Reinfeld, Paul Steinfath
 
     fprintf('Starting initial preprocessing...\n');
+
+    %% Extract parameters from config
+    crop_marker_path = prepro_config.crop_marker_path;
+    error_log_path = prepro_config.error_log_path;
+    sampling_rate = prepro_config.sampling_rate;
+    electrode_file = prepro_config.electrode_file;
+    highpass_cutoff = prepro_config.highpass_cutoff;
+    lowpass_cutoff = prepro_config.lowpass_cutoff;
+    line_noise_frequency = prepro_config.line_noise_frequency;
+    flatline_criterion = prepro_config.flatline_criterion;
+    artifact_threshold = prepro_config.artifact_threshold;
 
     %% get files
     files = find_files_by_extension(raw_data_path, '*.vhdr');
@@ -47,7 +59,7 @@ function a_1_preprocessing(raw_data_path, crop_marker_path, preprocessed_data_pa
             end
 
             %% load data
-            [EEG, com] = pop_loadbv(raw_data_path, files(i).name);
+            [EEG, ~] = pop_loadbv(raw_data_path, files(i).name);
 
             % keep subjid stored in EEG struct
             EEG.setname = subjid;

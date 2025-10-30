@@ -57,6 +57,20 @@ function config = setup_project_config()
     config.processing.flatline_criterion = 5;
     config.processing.artifact_threshold = 80;
 
+    %% Beat type definitions
+    config.beat_types.raw_file_labels = {'N'; 'S'; 'V'; 'badECG'}; % Beat types as they appear in raw table; S=PAC, V=PVC
+    config.beat_types.analysis_labels = {'iPAC'; 'PAC-1'; 'PAC-2'; 'PAC-3'; 'PAC-4'; ...
+                                             'PAC+1'; 'PAC+2'; 'PAC+3'; 'iPVC'; 'PVC-1'; 'PVC-2'; ...
+                                             'PVC-3'; 'PVC-4'; 'PVC+1'; 'PVC+2'; 'PVC+3'}; % Beat types used in analysis (excluding N and iN)
+
+    %% Analysis constants
+    config.analysis.min_trials_required = 5; % Minimum number of trials required for analysis
+
+    %% Electrode configuration
+    config.electrodes.file = [config.paths.eeglab, '/plugins/dipfit/standard_BESA/standard-10-5-cap385.elp'];
+    config.electrodes.exclude_channels = {'Fp1', 'Fp2'};
+    config.electrodes.eeg_channels = 1:31;
+
     %% ICA cleaning thresholds (unified structure)
     config.thresholds.ecg_std_deviation = 1.5;
     config.thresholds.ecg_correlation = 0.8;
@@ -82,21 +96,64 @@ function config = setup_project_config()
     config.hep.output_filename_pc = config.hep.get_output_filename('PC', config.hep.baseline_option, config.hep.ica_status);
     config.hep.output_filename_control = config.hep.get_output_filename('control', config.hep.baseline_option, config.hep.ica_status);
 
-    %% Beat type definitions
-    config.beat_types.raw_file_labels = {'N'; 'S'; 'V'; 'badECG'}; % Beat types as they appear in raw table; S=PAC, V=PVC
-    config.beat_types.analysis_labels = {'iPAC'; 'PAC-1'; 'PAC-2'; 'PAC-3'; 'PAC-4'; ...
-                                             'PAC+1'; 'PAC+2'; 'PAC+3'; 'iPVC'; 'PVC-1'; 'PVC-2'; ...
-                                             'PVC-3'; 'PVC-4'; 'PVC+1'; 'PVC+2'; 'PVC+3'}; % Beat types used in analysis (excluding N and iN)
+    %% Preprocessing configuration structures
+    % Configuration for a_1_preprocessing
+    config.prepro.ica.crop_marker_path = config.paths.crop_marker_path;
+    config.prepro.ica.error_log_path = config.paths.error_log_path;
+    config.prepro.ica.sampling_rate = config.processing.sampling_rate;
+    config.prepro.ica.electrode_file = config.electrodes.file;
+    config.prepro.ica.highpass_cutoff = config.processing.ica_highpass_cutoff;
+    config.prepro.ica.lowpass_cutoff = config.processing.ica_lowpass_cutoff;
+    config.prepro.ica.line_noise_frequency = config.processing.line_noise_frequency;
+    config.prepro.ica.flatline_criterion = config.processing.flatline_criterion;
+    config.prepro.ica.artifact_threshold = config.processing.artifact_threshold;
 
-    %% Analysis constants
-    config.analysis.min_trials_required = 5; % Minimum number of trials required for analysis
+    config.prepro.analysis.crop_marker_path = config.paths.crop_marker_path;
+    config.prepro.analysis.error_log_path = config.paths.error_log_path;
+    config.prepro.analysis.sampling_rate = config.processing.sampling_rate;
+    config.prepro.analysis.electrode_file = config.electrodes.file;
+    config.prepro.analysis.highpass_cutoff = config.processing.highpass_cutoff;
+    config.prepro.analysis.lowpass_cutoff = config.processing.lowpass_cutoff;
+    config.prepro.analysis.line_noise_frequency = config.processing.line_noise_frequency;
+    config.prepro.analysis.flatline_criterion = config.processing.flatline_criterion;
+    config.prepro.analysis.artifact_threshold = config.processing.artifact_threshold;
 
-    %% Electrode configuration
-    config.electrodes.file = [config.paths.eeglab, '/plugins/dipfit/standard_BESA/standard-10-5-cap385.elp'];
-    config.electrodes.exclude_channels = {'Fp1', 'Fp2'};
-    config.electrodes.eeg_channels = 1:31;
+    % Configuration for a_2_import_events (PC group with external ECG event files)
+    config.import_events.event_data_path = config.paths.event_data;
+    config.import_events.error_log_path = config.paths.error_log_path;
+    config.import_events.analysis_beat_types = config.beat_types.analysis_labels;
+    config.import_events.raw_file_labels = config.beat_types.raw_file_labels;
 
-    %% Statistics configuration - Base parameters shared by all analyses (no statistic here)
+    % Configuration for a_2c_detect_rpeaks_control (control group without external ECG files)
+    config.rpeak_detection.error_log_path = config.paths.error_log_path;
+    config.rpeak_detection.sampling_rate = config.processing.sampling_rate;
+    config.rpeak_detection.detection_method = 'heplab_slowdetect';
+
+    % Configuration for a_3_run_ICA
+    config.ica_cleaning.error_log_path = config.paths.error_log_path;
+    config.ica_cleaning.qa_path = config.paths.qa_path;
+    config.ica_cleaning.analysis_window = config.ica.analysis_window;
+    config.ica_cleaning.thresholds = config.thresholds;
+    config.ica_cleaning.analysis_beat_types = config.beat_types.analysis_labels;
+
+    % Configuration for a_5_epoch_timedomain
+    config.epoching.pc.error_log_path = config.paths.error_log_path;
+    config.epoching.pc.epoch_length = config.hep.epoch_length;
+    config.epoching.pc.baseline_time = config.hep.baseline_time;
+    config.epoching.pc.baseline_option = config.hep.baseline_option;
+    config.epoching.pc.analysis_beat_types = config.beat_types.analysis_labels;
+    config.epoching.pc.subject_type = 'PC';
+    config.epoching.pc.min_trials_required = config.analysis.min_trials_required;
+
+    config.epoching.control.error_log_path = config.paths.error_log_path;
+    config.epoching.control.epoch_length = config.hep.epoch_length;
+    config.epoching.control.baseline_time = config.hep.baseline_time;
+    config.epoching.control.baseline_option = config.hep.baseline_option;
+    config.epoching.control.analysis_beat_types = config.beat_types.analysis_labels;
+    config.epoching.control.subject_type = 'control';
+    config.epoching.control.min_trials_required = config.analysis.min_trials_required;
+
+    %% Statistics configuration - Base parameters shared by all analyses
     config.stats.statistical_analysis_base.parameter = 'avg';
     config.stats.statistical_analysis_base.method = 'montecarlo';
     config.stats.statistical_analysis_base.correctm = 'cluster';
@@ -199,5 +256,33 @@ function config = setup_project_config()
                                                                 [0.410, 0.480], ...
                                                                 [0.480, 0.550], ...
                                                                 [0.550, 0.620]};
+
+    %% CFA CORRELATION ANALYSIS
+    % Configuration for cardiac field artifact correlation control analysis
+
+    % Base CFA configuration
+    config.cfa.base.paths = config.paths;
+    config.cfa.base.hep_params = config.hep;
+    config.cfa.base.corr_type = 'Pearson';
+    config.cfa.base.corr_n_permu = 100;
+
+    % Statistical analysis parameters for CFA correlation
+    config.cfa.base.statistical_analysis = config.stats.statistical_analysis_base;
+    config.cfa.base.statistical_analysis.statistic = 'ft_statfun_depsamplesT';
+    config.cfa.base.statistical_analysis.channel = {'all', '-ECG'};
+    config.cfa.base.statistical_analysis.minnbchan = 2;
+
+    % Configuration 1: Delta HEP and delta ECG correlation analysis
+    config.cfa.delta_hep_ecg = config.cfa.base;
+    config.cfa.delta_hep_ecg.beat_comparison = '+1';
+    config.cfa.delta_hep_ecg.beat_reference = '-3';
+    config.cfa.delta_hep_ecg.group_select = 'PC';
+
+    % Configuration 2: Averaged time-window correlation analysis
+    config.cfa.avg_timewindow = config.cfa.base;
+    config.cfa.avg_timewindow.beat_comparison = '+1';
+    config.cfa.avg_timewindow.beat_reference = '-3';
+    config.cfa.avg_timewindow.group_select = 'PC';
+    config.cfa.avg_timewindow.time_window = [0.19, 0.478];
 
 end

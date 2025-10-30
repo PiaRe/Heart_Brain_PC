@@ -1,4 +1,4 @@
-function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch_length, baseline_time, baseline_option, analysis_beat_types, subject_type, min_trials_required, output_filename)
+function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_filename)
     % A_5_EPOCH_TIMEDOMAIN - Epoch the data for time domain HEP analysis
     %
     % This function performs epoching for Heartbeat Evoked Potentials (HEP) analysis.
@@ -18,16 +18,15 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
     % Inputs:
     %   post_ica_path      - Path to data after ICA processing with reintegrated ECG (string)
     %   epoched_path       - Path for saving epoched data (string)
-    %   error_log_path     - Path for saving error logs (string)
-    %   epoch_length       - Time window for epochs [start, end] in ms (e.g., [-200, 800])
-    %   baseline_time      - Baseline time window [start, end] in ms (e.g., [-150, -50])
-    %   baseline_option    - Baseline option ('no', 'ref', 'int')
-    %                       'no'  - no baseline correction
-    %                       'ref' - baseline to reference condition (150-50ms before R-peak)
-    %                       'int' - baseline to condition of interest (150-50ms before beat)
-    %   analysis_beat_types - Cell array of beat types to analyze from config
-    %   subject_type       - 'PC' for premature contractions or 'control' for healthy controls
-    %   min_trials_required - Minimum number of trials required for analysis
+    %   epoch_config       - Structure containing epoching configuration:
+    %       .error_log_path       - Path for saving error logs
+    %       .epoch_length         - Time window for epochs [start, end] in ms
+    %       .baseline_time        - Baseline time window [start, end] in ms
+    %       .baseline_option      - Baseline option ('no', 'ref', 'int')
+    %       .analysis_beat_types  - Cell array of beat types to analyze
+    %       .subject_type         - 'PC' or 'control'
+    %       .min_trials_required  - Minimum number of trials required
+    %   output_filename    - Name of the output .mat file
     %
     % Outputs:
     %   - Epoched EEG data saved in epoched_path
@@ -46,6 +45,16 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, error_log_path, epoch
     %   For control subjects: iN (isolated normal beats)
     %
     % Author: Pia Reinfeld
+
+    %% Extract parameters from config
+    error_log_path = epoch_config.error_log_path;
+    epoch_length = epoch_config.epoch_length;
+    baseline_time = epoch_config.baseline_time;
+    baseline_option = epoch_config.baseline_option;
+    analysis_beat_types = epoch_config.analysis_beat_types;
+    subject_type = epoch_config.subject_type;
+    min_trials_required = epoch_config.min_trials_required;
+
     fprintf('Starting epoching for time domain HEP analysis for %s subjects...\n', subject_type);
 
     files = find_files_by_extension(post_ica_path, '*.set');

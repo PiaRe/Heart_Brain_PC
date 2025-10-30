@@ -19,7 +19,7 @@ function metadata = create_source_metadata(source_config, n_subjects, n_pipeline
 
     % Analysis details
     metadata.analysis_type = 'eLORETA_source_reconstruction';
-    metadata.analysis_date = datestr(now);
+    metadata.analysis_date = char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'));
     metadata.n_subjects = n_subjects;
     metadata.n_pipelines = n_pipelines;
 

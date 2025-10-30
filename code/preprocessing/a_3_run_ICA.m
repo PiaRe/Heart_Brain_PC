@@ -1,4 +1,4 @@
-function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, qa_path, ica_analysis_window, threshold_config, analysis_beat_types)
+function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
     % A_3_RUN_ICA Remove ICA components based on various artifact criteria
     %
     % The function:
@@ -14,20 +14,22 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
     %   4. Saves cleaned datasets and error logs
     %
     % Inputs:
-    %   pre_ica_path          - Path to input .set files.
-    %   post_ica_path         - Path to save cleaned datasets.
-    %   error_log_path        - Path to save error logs.
-    %   qa_path               - Path to save quality assessment plots.
-    %   ica_analysis_window   - Window size for ICA analysis.
-    %   threshold_config      - Structure containing thresholds for artifact rejection:
-    %                          * threshold_config.ecg_std_deviation - ECG component rejection threshold.
-    %                          * threshold_config.ecg_correlation   - ECG component correlation threshold.
-    %                          * threshold_config.muscle_artifact   - Muscle artifact rejection threshold.
-    %                          * threshold_config.eye_artifact      - Eye movement artifact rejection threshold.
-    %                          * threshold_config.line_noise        - Line noise rejection threshold.
-    %                          * threshold_config.channel_noise     - Channel noise rejection threshold.
-    %                          * threshold_config.other_artifact    - Other artifact rejection threshold.
-    %   analysis_beat_types   - Beat types to consider for the analysis
+    %   no_ica_path           - Path to non-ICA datasets for copying ICA weights
+    %   pre_ica_path          - Path to input .set files
+    %   post_ica_path         - Path to save cleaned datasets
+    %   ica_config            - Structure containing ICA configuration:
+    %       .error_log_path        - Path to save error logs
+    %       .qa_path               - Path to save quality assessment plots
+    %       .analysis_window       - Window size for ICA analysis
+    %       .thresholds            - Structure with artifact rejection thresholds:
+    %           .ecg_std_deviation   - ECG component rejection threshold
+    %           .ecg_correlation     - ECG component correlation threshold
+    %           .muscle_artifact     - Muscle artifact rejection threshold
+    %           .eye_artifact        - Eye movement artifact rejection threshold
+    %           .line_noise          - Line noise rejection threshold
+    %           .channel_noise       - Channel noise rejection threshold
+    %           .other_artifact      - Other artifact rejection threshold
+    %       .analysis_beat_types   - Beat types to consider for analysis
     %
     % Outputs:
     %   - Cleaned EEG datasets (.set files) in post_ica_path
@@ -42,6 +44,13 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
     %
     % Author: Paul Steinfath, Pia Reinfeld
 
+    %% Extract parameters from config
+    error_log_path = ica_config.error_log_path;
+    qa_path = ica_config.qa_path;
+    ica_analysis_window = ica_config.analysis_window;
+    threshold_config = ica_config.thresholds;
+    analysis_beat_types = ica_config.analysis_beat_types;
+
     %% get file names
     files = find_files_by_extension(pre_ica_path, '*.set');
 
@@ -50,7 +59,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
     savefilesnames = {savefiles.name};
 
     %% Loop over subjects
-    parfor i = 1:length(files)
+    for i = 1:length(files)
 
         try
             subjid = extract_subject_id(files(i).name);
@@ -70,7 +79,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, error_log_path, q
             EEG = pop_loadset('filename', files(i).name, 'filepath', no_ica_path);
 
             %% Epoch on R-Peaks
-
+            analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}];
             % epoch data around all heartbeats
             EEG_ICA = pop_epoch(EEG_ICA, analysis_beat_types, ica_analysis_window);
 

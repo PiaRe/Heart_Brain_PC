@@ -47,7 +47,7 @@ function save_source_results_with_metadata(results_table, metadata, save_path, f
         %% Write metadata header
         fprintf(fid, '# ====== SOURCE ANALYSIS METADATA ======\n');
         fprintf(fid, '# Analysis Type: eLORETA Source Reconstruction - Multiverse Analysis\n');
-        fprintf(fid, '# Date: %s\n', getfield_or_default(metadata, 'analysis_date', datestr(now)));
+        fprintf(fid, '# Date: %s\n', getfield_or_default(metadata, 'analysis_date', char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'))));
         fprintf(fid, '#\n');
 
         % Comparison details

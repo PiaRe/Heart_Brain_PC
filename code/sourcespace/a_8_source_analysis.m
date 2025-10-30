@@ -222,7 +222,7 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
         source_data_cortex75K = source_sig_visualization(cortex_surface.cortex5K.in_to_cortex75K_geod);
         % addpath /data/pt_02584/Patty / premature_beats / scripts / source_modeling / eLORETA_files /;
         visualize_hep_source_brain(cortex_surface, source_data_cortex75K, ...
-            [0 100], colormap_brain, '%', 1, 'views', [1, 2, 3, 4, 5, 8], 'save', 0);
+            [0 100], colormap_brain, 1, 'views', [1, 2, 3, 4, 5, 8], 'save', 0);
 
         % Save figure with consistent naming convention (source space is always within-subject)
         output_filename_base = sprintf('sourcespace_within_%s_%s_vs_%s', ...
@@ -257,7 +257,7 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
         save_data.roi_labels_hep = roi_labels_hep;
         save_data.config_used = source_config;
         save_data.metadata = metadata;
-        save_data.analysis_date = datestr(now);
+        save_data.analysis_date = char(datetime('now', 'Format', 'dd-MMM-yyyy HH:mm:ss'));
 
         save(fullfile(output_path, save_filename), 'save_data');
         fprintf('MATLAB results saved to: %s\n', save_filename);
@@ -271,7 +271,7 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
 
         % Log error
         error_log_file = fullfile(error_log_path, sprintf('source_eloreta_error_%s.txt', ...
-            datestr(now, 'yyyymmdd_HHMMSS')));
+            char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'))));
         fid = fopen(error_log_file, 'w');
         fprintf(fid, '%s', error_msg);
         fclose(fid);
