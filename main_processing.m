@@ -87,18 +87,18 @@ create_dirs(dirs_to_create);
 eeglab; close;
 
 %% Step 1: Initial preprocessing
-fprintf('Running step 1a: Initial preprocessing of PC data for ICA');
-a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica);
+% fprintf('Running step 1a: Initial preprocessing of PC data for ICA');
+% a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica);
 
-fprintf('Running step 1b: Initial preprocessing of PC analysis data');
-a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis);
+% fprintf('Running step 1b: Initial preprocessing of PC analysis data');
+% a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis);
 
 %% Step 2: Import events (timepoints of R-peaks)
-fprintf('Running step 2a: Importing ECG events and beats for PC ICA data');
-a_2b_import_events(config.paths.pre_ica_pc_path, config.paths.pre_ica_pc_path, config.import_events);
+% fprintf('Running step 2a: Importing ECG events and beats for PC ICA data');
+% a_2a_import_rpeaks_PC(config.paths.pre_ica_pc_path, config.paths.pre_ica_pc_path, config.import_events);
 
-fprintf('Running step 2b: Importing ECG events and beats for PC analysis data');
-a_2b_import_events(config.paths.no_ica_pc_path, config.paths.no_ica_pc_path, config.import_events);
+% fprintf('Running step 2b: Importing ECG events and beats for PC analysis data');
+% a_2a_import_rpeaks_PC(config.paths.no_ica_pc_path, config.paths.no_ica_pc_path, config.import_events);
 
 %% Step 3: Run ICA and remove artifactual components
 fprintf('Running step 3: Running ICA and removing components for PC subjects');

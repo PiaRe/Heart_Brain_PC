@@ -59,7 +59,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
     savefilesnames = {savefiles.name};
 
     %% Loop over subjects
-    for i = 1:length(files)
+    parfor i = 1:length(files)
 
         try
             subjid = extract_subject_id(files(i).name);
@@ -79,9 +79,10 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             EEG = pop_loadset('filename', files(i).name, 'filepath', no_ica_path);
 
             %% Epoch on R-Peaks
-            analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}];
+            % Create local copy of beat types to avoid parfor variable issues
+            all_analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}];
             % epoch data around all heartbeats
-            EEG_ICA = pop_epoch(EEG_ICA, analysis_beat_types, ica_analysis_window);
+            EEG_ICA = pop_epoch(EEG_ICA, all_analysis_beat_types, ica_analysis_window);
 
             %% run ICA on epoched data
 
@@ -95,7 +96,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             %% select ICA components
 
             % Select ICA components based on ECG template
-            [EEG_ICA, cV, rejV] = ecg_ica_corr(EEG_ICA, [], ica_analysis_window, analysis_beat_types, threshold_config.ecg_std_deviation);
+            [EEG_ICA, cV, rejV] = ecg_ica_corr(EEG_ICA, [], ica_analysis_window, all_analysis_beat_types, threshold_config.ecg_std_deviation);
 
             % plot & save correlated ECG components
             plot_ecg_ica_comps(EEG_ICA, rejV, cV, [qa_path, subjid, '/'], subjid);
