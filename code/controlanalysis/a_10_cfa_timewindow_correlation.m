@@ -68,27 +68,31 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
         comparison_data = cellfun(@(x) rmfield_safe(x, 'avg'), comparison_data, 'UniformOutput', false);
         reference_data = cellfun(@(x) rmfield_safe(x, 'avg'), reference_data, 'UniformOutput', false);
 
-        % Compute differences and average in time window
-        mean_time_window = zeros(length(comparison_data), 32);
-        diff = comparison_data;
+        % Extract dimensions from data
+        n_subjects = length(comparison_data);
+        n_all_channels = size(comparison_data{1}.trial, 2);
+        n_eeg_channels = 31;
+        ecg_channel_idx = 32; % Index of ECG channel
 
-        parfor subj = 1:length(comparison_data)
+        fprintf('Data dimensions: %d subjects, %d channels (31 EEG + 1 ECG)\n', n_subjects, n_all_channels); % Compute differences and average in time window
+        subject_avg_eeg_ecg = zeros(n_subjects, n_all_channels);
+        delta_hep_ecg = comparison_data;
+
+        parfor subj = 1:n_subjects
             % Compute delta EEG and delta ECG
             cfg = [];
             cfg.operation = 'subtract';
             cfg.parameter = 'trial';
-            diff{1, subj} = ft_math(cfg, comparison_data{1, subj}, reference_data{1, subj});
+            delta_hep_ecg{1, subj} = ft_math(cfg, comparison_data{1, subj}, reference_data{1, subj});
 
             % Select time window
             cfg = [];
             cfg.latency = time_window;
-            diff{1, subj} = ft_selectdata(cfg, diff{1, subj});
+            delta_hep_ecg_tw = ft_selectdata(cfg, delta_hep_ecg{1, subj});
 
-            % Average across time for each trial
-            diff{1, subj}.mean_timewindow = mean(diff{1, subj}.trial, 3);
-
-            % Average across trials for each subject
-            mean_time_window(subj, :) = mean(diff{1, subj}.mean_timewindow, 1);
+            % Average across time for each trial, then across trials
+            trials_avg_across_time = mean(delta_hep_ecg_tw.trial, 3);
+            subject_avg_eeg_ecg(subj, :) = mean(trials_avg_across_time, 1);
         end
 
         %% Correlate mean time-window EEG with mean time-window ECG across subjects
@@ -96,18 +100,20 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
         cfg.latency = stat_params.latency;
         cfg.parameter = 'avg';
         cfg.channel = {'all', '-ECG'};
-        Beat = ft_timelockgrandaverage(cfg, comparison_data{1, :});
+        GA_template = ft_timelockgrandaverage(cfg, comparison_data{1, :});
 
-        correlation_time_window = Beat;
-        [correlation_time_window.correl, correlation_time_window.pval] = ...
-            corr(mean_time_window(:, 1:31), mean_time_window(:, 32), 'type', corr_type, 'tail', 'both');
+        correlation_result = GA_template;
+        [correlation_result.correl, correlation_result.pval] = ...
+            corr(subject_avg_eeg_ecg(:, 1:n_eeg_channels), subject_avg_eeg_ecg(:, ecg_channel_idx), ...
+            'type', corr_type, 'tail', 'both');
 
         % Replicate correlation values across time for topoplot
-        correlation_time_window.correl = repmat(correlation_time_window.correl, 1, 500);
+        n_timepoints_plot = size(GA_template.avg, 2);
+        correlation_result.correl = repmat(correlation_result.correl, 1, n_timepoints_plot);
 
         % FDR correction
-        correlation_time_window.pval_fdr = mafdr(correlation_time_window.pval, 'BHFDR', true);
-        sig_elec = correlation_time_window.elec.label(correlation_time_window.pval_fdr < 0.05);
+        correlation_result.pval_fdr = mafdr(correlation_result.pval, 'BHFDR', true);
+        sig_elec = correlation_result.elec.label(correlation_result.pval_fdr < 0.05);
 
         fprintf('Found %d significant electrodes (FDR corrected)\n', length(sig_elec));
 
@@ -131,7 +137,7 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
             cfg.highlightchannel = sig_elec;
         end
 
-        ft_topoplotER(cfg, correlation_time_window);
+        ft_topoplotER(cfg, correlation_result);
 
         [beat_ldg, beatNorm_ldg] = format_beat_labels(beat_comparison, beat_reference, group_select, false);
         title(['CFA Control: corr(HEP_{', beat_ldg, '-', beatNorm_ldg, '}, ECG_{', beat_ldg, '-', beatNorm_ldg, '})'], ...
@@ -147,7 +153,7 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
 
         annotation('textbox', [0, 0.02, 1, 0.05], 'FontSize', 10, ...
             'String', sprintf('min(corr): %.2f; max(corr): %.2f', ...
-            min(correlation_time_window.correl(1, :)), max(correlation_time_window.correl(1, :))), ...
+            min(correlation_result.correl(1, :)), max(correlation_result.correl(1, :))), ...
             'EdgeColor', 'none', 'HorizontalAlignment', 'center');
         annotation('textbox', [0, 0.08, 1, 0.05], 'FontSize', 10, ...
             'String', sprintf('averaged time window: %.2f s - %.2f s', time_window(1), time_window(2)), ...

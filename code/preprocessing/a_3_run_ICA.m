@@ -65,6 +65,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             subjid = extract_subject_id(files(i).name);
 
             % if subject exists, skip
+
             if any(strcmp(savefilesnames, [subjid, '.set']))
                 continue
             end
@@ -78,9 +79,33 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             EEG_ICA = pop_loadset('filename', files(i).name, 'filepath', pre_ica_path);
             EEG = pop_loadset('filename', files(i).name, 'filepath', no_ica_path);
 
-            %% Epoch on R-Peaks
-            % Create local copy of beat types to avoid parfor variable issues
+            %% Remove ECG channel if present in EEG data
+            % Check if ECG channel exists in EEG_ICA and remove it
+            ecg_chan_idx_ica = find(strcmp({EEG_ICA.chanlocs.labels}, 'ECG') | strcmp({EEG_ICA.chanlocs.labels}, 'EKG'));
+
+            if ~isempty(ecg_chan_idx_ica)
+                EEG_ICA = pop_select(EEG_ICA, 'nochannel', ecg_chan_idx_ica);
+                fprintf('Subject %s: Removed ECG channel from EEG_ICA\n', subjid);
+            end
+
+            % Check if ECG channel exists in EEG and remove it
+            ecg_chan_idx = find(strcmp({EEG.chanlocs.labels}, 'ECG') | strcmp({EEG.chanlocs.labels}, 'EKG'));
+
+            if ~isempty(ecg_chan_idx)
+                EEG = pop_select(EEG, 'nochannel', ecg_chan_idx);
+                fprintf('Subject %s: Removed ECG channel from EEG\n', subjid);
+            end
+
+            %% Create ECG template before epoching
             all_analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}];
+
+            % Epoch ECG data to create template
+            EEG_ICA.ECG.event = EEG_ICA.event; % Copy events before epoching
+            ECG_epoched = pop_epoch(EEG_ICA.ECG, all_analysis_beat_types, ica_analysis_window);
+            ECG_epoched = pop_rmbase(ECG_epoched, [ica_analysis_window(1) 0]);
+            ECG_template = mean(ECG_epoched.data, 3); % Create template from averaged epochs
+
+            %% Epoch on R-Peaks
             % epoch data around all heartbeats
             EEG_ICA = pop_epoch(EEG_ICA, all_analysis_beat_types, ica_analysis_window);
 
@@ -96,7 +121,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             %% select ICA components
 
             % Select ICA components based on ECG template
-            [EEG_ICA, cV, rejV] = ecg_ica_corr(EEG_ICA, [], ica_analysis_window, all_analysis_beat_types, threshold_config.ecg_std_deviation);
+            [EEG_ICA, cV, rejV] = ecg_ica_corr(EEG_ICA, ECG_template, all_analysis_beat_types, ica_analysis_window, threshold_config.ecg_std_deviation);
 
             % plot & save correlated ECG components
             plot_ecg_ica_comps(EEG_ICA, rejV, cV, [qa_path, subjid, '/'], subjid);

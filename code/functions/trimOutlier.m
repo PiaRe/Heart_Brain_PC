@@ -1,10 +1,4 @@
-%% Modified from trimOutlier() %%
-
-function [EEG, rejectDataIntervals] = trimOutlier_adjust(EEG, amplitudeThreshold_hf, pointSpreadWidth)
-
-    if ~(nargin == 4)
-        error('trimOutlier() requires 4 input arguments.')
-    end
+function [EEG, rejectDataIntervals] = trimOutlier(EEG, amplitudeThreshold_hf, pointSpreadWidth)
 
     % return if 3-D
     if ndims(EEG.data) == 3

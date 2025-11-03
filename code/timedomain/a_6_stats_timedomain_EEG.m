@@ -493,6 +493,7 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
 
         fprintf('Plots completed successfully.\n');
         fprintf('Time domain statistical analysis completed successfully.\n');
+        close all;
 
     catch ME
         error_msg = sprintf('Error in a_6_stats_timedomain_EEG: %s\n%s', ME.message, getReport(ME));

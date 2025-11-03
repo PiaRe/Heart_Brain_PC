@@ -474,6 +474,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
 
         fprintf('ECG plots completed successfully.\n');
         fprintf('ECG time domain statistical analysis completed successfully.\n');
+        close all;
 
     catch ME
         error_msg = sprintf('Error in a_7_stats_timedomain_ECG: %s\n%s', ME.message, getReport(ME));

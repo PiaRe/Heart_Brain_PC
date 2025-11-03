@@ -49,13 +49,16 @@ function config = setup_project_config()
 
     %% Processing parameters
     config.processing.sampling_rate = 500;
-    config.processing.highpass_cutoff = 20;
-    config.processing.lowpass_cutoff = 0.5;
-    config.processing.ica_highpass_cutoff = 20;
-    config.processing.ica_lowpass_cutoff = 1;
+    config.processing.high_cutoff = 20;
+    config.processing.low_cutoff = 0.5;
+    config.processing.ica_high_cutoff = 20;
+    config.processing.ica_low_cutoff = 1;
     config.processing.line_noise_frequency = 50;
     config.processing.flatline_criterion = 5;
-    config.processing.artifact_threshold = 80;
+
+    % ECG-specific filter parameters (to avoid edge artifacts around R-peaks)
+    config.processing.ecg_high_cutoff = 45; % Higher cutoff for ECG to preserve R-peak morphology
+    config.processing.ecg_low_cutoff = 0.5; % Same low cutoff as EEG
 
     %% Beat type definitions
     config.beat_types.raw_file_labels = {'N'; 'S'; 'V'; 'badECG'}; % Beat types as they appear in raw table; S=PAC, V=PVC
@@ -102,21 +105,23 @@ function config = setup_project_config()
     config.prepro.ica.error_log_path = config.paths.error_log_path;
     config.prepro.ica.sampling_rate = config.processing.sampling_rate;
     config.prepro.ica.electrode_file = config.electrodes.file;
-    config.prepro.ica.highpass_cutoff = config.processing.ica_highpass_cutoff;
-    config.prepro.ica.lowpass_cutoff = config.processing.ica_lowpass_cutoff;
+    config.prepro.ica.high_cutoff = config.processing.ica_high_cutoff;
+    config.prepro.ica.low_cutoff = config.processing.ica_low_cutoff;
+    config.prepro.ica.ecg_high_cutoff = config.processing.ecg_high_cutoff;
+    config.prepro.ica.ecg_low_cutoff = config.processing.ecg_low_cutoff;
     config.prepro.ica.line_noise_frequency = config.processing.line_noise_frequency;
     config.prepro.ica.flatline_criterion = config.processing.flatline_criterion;
-    config.prepro.ica.artifact_threshold = config.processing.artifact_threshold;
 
     config.prepro.analysis.crop_marker_path = config.paths.crop_marker_path;
     config.prepro.analysis.error_log_path = config.paths.error_log_path;
     config.prepro.analysis.sampling_rate = config.processing.sampling_rate;
     config.prepro.analysis.electrode_file = config.electrodes.file;
-    config.prepro.analysis.highpass_cutoff = config.processing.highpass_cutoff;
-    config.prepro.analysis.lowpass_cutoff = config.processing.lowpass_cutoff;
+    config.prepro.analysis.high_cutoff = config.processing.high_cutoff;
+    config.prepro.analysis.low_cutoff = config.processing.low_cutoff;
+    config.prepro.analysis.ecg_high_cutoff = config.processing.ecg_high_cutoff;
+    config.prepro.analysis.ecg_low_cutoff = config.processing.ecg_low_cutoff;
     config.prepro.analysis.line_noise_frequency = config.processing.line_noise_frequency;
     config.prepro.analysis.flatline_criterion = config.processing.flatline_criterion;
-    config.prepro.analysis.artifact_threshold = config.processing.artifact_threshold;
 
     % Configuration for a_2_import_events (PC group with external ECG event files)
     config.import_events.event_data_path = config.paths.event_data;
@@ -272,17 +277,30 @@ function config = setup_project_config()
     config.cfa.base.statistical_analysis.channel = {'all', '-ECG'};
     config.cfa.base.statistical_analysis.minnbchan = 2;
 
-    % Configuration 1: Delta HEP and delta ECG correlation analysis
-    config.cfa.delta_hep_ecg = config.cfa.base;
-    config.cfa.delta_hep_ecg.beat_comparison = '+1';
-    config.cfa.delta_hep_ecg.beat_reference = '-3';
-    config.cfa.delta_hep_ecg.group_select = 'PC';
+    % Configuration 1: Delta HEP and delta ECG cluster-based correlation analysis (PC: +1 vs -3)
+    config.cfa.cluster_pc_p1_vs_m3 = config.cfa.base;
+    config.cfa.cluster_pc_p1_vs_m3.beat_comparison = '+1';
+    config.cfa.cluster_pc_p1_vs_m3.beat_reference = '-3';
+    config.cfa.cluster_pc_p1_vs_m3.group_select = 'PC';
 
-    % Configuration 2: Averaged time-window correlation analysis
-    config.cfa.avg_timewindow = config.cfa.base;
-    config.cfa.avg_timewindow.beat_comparison = '+1';
-    config.cfa.avg_timewindow.beat_reference = '-3';
-    config.cfa.avg_timewindow.group_select = 'PC';
-    config.cfa.avg_timewindow.time_window = [0.19, 0.478];
+    % Configuration 2: Delta HEP and delta ECG cluster-based correlation analysis (PVC: 0 vs -3)
+    config.cfa.cluster_pvc_0_vs_m3 = config.cfa.base;
+    config.cfa.cluster_pvc_0_vs_m3.beat_comparison = '0';
+    config.cfa.cluster_pvc_0_vs_m3.beat_reference = '-3';
+    config.cfa.cluster_pvc_0_vs_m3.group_select = 'PVC';
+
+    % Configuration 3: Averaged time-window correlation analysis (PC: +1 vs -3, tw: 0.12-0.2)
+    config.cfa.timewindow_pc_p1_vs_m3 = config.cfa.base;
+    config.cfa.timewindow_pc_p1_vs_m3.beat_comparison = '+1';
+    config.cfa.timewindow_pc_p1_vs_m3.beat_reference = '-3';
+    config.cfa.timewindow_pc_p1_vs_m3.group_select = 'PC';
+    config.cfa.timewindow_pc_p1_vs_m3.time_window = [0.12, 0.2];
+
+    % Configuration 4: Averaged time-window correlation analysis (PVC: 0 vs -3, tw: 0.22-0.35)
+    config.cfa.timewindow_pvc_0_vs_m3 = config.cfa.base;
+    config.cfa.timewindow_pvc_0_vs_m3.beat_comparison = '0';
+    config.cfa.timewindow_pvc_0_vs_m3.beat_reference = '-3';
+    config.cfa.timewindow_pvc_0_vs_m3.group_select = 'PVC';
+    config.cfa.timewindow_pvc_0_vs_m3.time_window = [0.22, 0.35];
 
 end

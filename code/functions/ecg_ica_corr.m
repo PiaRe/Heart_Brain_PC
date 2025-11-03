@@ -1,76 +1,60 @@
-function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker, SDcrit)
+function [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, R_marker, time_window, SDcrit)
     % ECG_ICA_CORR - Identifies ECG-related ICA components by correlation.
     %
     % Syntax:  [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, time_window, R_marker, SDcrit)
     %
     % Inputs:
-    %    EEG - EEG structure containing ICA activations.
-    %    ECG_template - ECG template for correlation (optional).
-    %    time_window - Time window for epoching around R-peak markers.
-    %    R_marker - Marker for R-peaks in the ECG signal.
+    %    EEG - EEG structure containing ICA activations (already epoched).
+    %    ECG_template - ECG template for correlation (required).
+    %    R_marker - Heartbeat events to epoch ICA component
+    %    time_window - Timewindow for epoched ICA analysis
     %    SDcrit - Standard deviation criterion for identifying ECG components.
     %
     % Outputs:
-    %    EEG - EEG structure with identified ECG components removed.
+    %    EEG - EEG structure with identified ECG components.
     %    cV - Correlation values of ICA components with ECG template.
     %    rejV - Logical vector indicating rejected components.
     %
     % Description:
     %    This function identifies ECG-related Independent Component Analysis (ICA)
     %    components by correlating them with an ECG template. It performs the following steps:
-    %    1) Epochs the ICA activations based on R-peak markers.
+    %    1) Uses the already epoched ICA activations.
     %    2) Calculates the correlation of each average ICA waveform to the ECG template.
     %    3) Identifies components above a certain standard deviation threshold as ECG artifacts.
     %    4) Checks for oscillatory peaks to preserve potential brain-like activity.
     %
     % Example:
-    %    [EEG, cV, rejV] = ecg_ica_corr(EEG, [], [-0.2 0.6], 'R', 1.5);
+    %    [EEG, cV, rejV] = ecg_ica_corr(EEG, ECG_template, [], [], 1.5);
     %
-    % See also: pop_epoch, pop_rmbase, Compute_RP
+    % See also: pop_epoch, pop_rmbase, compute_RP
 
     % Create a temporary EEG structure for ICA data
     EEGtemp = EEG;
+
+    %get back ICA activity
+    EEG = eeg_checkset(EEG, 'ica');
+    EEG.icaact = (EEG.icaweights * EEG.icasphere) * EEG.data(EEG.icachansind, :);
+
     EEGtemp.data = EEG.icaact;
+    add_chans = size(EEG.data, 1) - size(EEGtemp.data, 1);
 
-    % Check if the data is 2D or less
     if ndims(EEGtemp.data) <= 2
-        % Calculate the number of additional channels needed
-        add_chans = size(EEG.data, 1) - size(EEGtemp.data, 1);
-
-        % exchange EEG data with ICA data for easier epoching
-        if size(EEGtemp.data, 1) ~= size(EEG.data, 1) && add_chans > 0
+        %exchange EEG data with ICA data for easier epoching
+        if size(EEGtemp.data, 1) ~= size(EEG.data, 1)
             EEGtemp.data = [EEGtemp.data; zeros(add_chans, length(EEGtemp.data))];
         end
 
-        % Epoch ICA data based on R-peak markers
+        %Epoch ICA data
         EEGtemp = pop_epoch(EEGtemp, R_marker, time_window);
 
-        % Remove the added channels (only if they were actually added)
         if add_chans > 0
             EEGtemp.data(end - add_chans + 1:end, :, :) = [];
         end
 
-        % Epoch EEG according to ECG marker
-        EEG = pop_epoch(EEG, R_marker, time_window);
-        EEG.ECG.event = EEG.event;
-        EEG.ECG = pop_epoch(EEG.ECG, R_marker, time_window);
     end
 
-    % Remove baseline from EEG data
-    EEG = pop_rmbase(EEG, [time_window(1) 0]);
-
-    % Calculate the average ICA component
+    % Calculate the average ICA component across epochs
     avgIC = mean(EEGtemp.data, 3);
-
-    % If no ECG template is provided, try to create one from the ECG channel
-    if isempty(ECG_template)
-
-        try
-            ECG_template = mean(EEG.ECG.data, 3);
-        catch
-        end
-
-    end
 
     % Calculate correlation values with the ECG template
     cV = abs(corr(avgIC', ECG_template'));

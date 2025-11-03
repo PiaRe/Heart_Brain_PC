@@ -16,11 +16,11 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     %       .error_log_path        - Path for error logs
     %       .sampling_rate         - Target sampling rate for downsampling
     %       .electrode_file        - Path to electrode montage file
-    %       .highpass_cutoff       - High-pass filter cutoff
-    %       .lowpass_cutoff        - Low-pass filter cutoff
+    %       .high_cutoff       - High-frequency cutoff
+    %       .low_cutoff            - Low-frequency cutoff
     %       .line_noise_frequency  - Line noise frequency for notch filtering
     %       .flatline_criterion    - Criterion for detecting flatline channels
-    %       .artifact_threshold    - Threshold to exclude artifacts
+    %       .artefact_thresh    - Threshold to exclude artifacts
     %
     % Author: Pia Reinfeld, Paul Steinfath
 
@@ -31,11 +31,12 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     error_log_path = prepro_config.error_log_path;
     sampling_rate = prepro_config.sampling_rate;
     electrode_file = prepro_config.electrode_file;
-    highpass_cutoff = prepro_config.highpass_cutoff;
-    lowpass_cutoff = prepro_config.lowpass_cutoff;
+    high_cutoff = prepro_config.high_cutoff;
+    low_cutoff = prepro_config.low_cutoff;
+    ecg_high_cutoff = prepro_config.ecg_high_cutoff;
+    ecg_low_cutoff = prepro_config.ecg_low_cutoff;
     line_noise_frequency = prepro_config.line_noise_frequency;
     flatline_criterion = prepro_config.flatline_criterion;
-    artifact_threshold = prepro_config.artifact_threshold;
 
     %% get files
     files = find_files_by_extension(raw_data_path, '*.vhdr');
@@ -51,10 +52,9 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
 
             % subject ID and name for saving
             subjid = extract_subject_id(files(i).name, '.vhdr');
-            newID = [subjid '.set'];
 
             % if subject is already in prep - folder, skip it
-            if any(strcmp(prepFileList, newID))
+            if any(strcmp(prepFileList, [subjid(1:12), '.set'])) % TODO: change
                 continue
             end
 
@@ -67,14 +67,32 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             % add montage EEG electrodes
             EEG = pop_chanedit(EEG, 'lookup', electrode_file);
 
-            %% Filter EEG
-            EEG = pop_eegfiltnew(EEG, 'hicutoff', highpass_cutoff, 'plotfreqz', 0);
-            EEG = pop_eegfiltnew(EEG, 'locutoff', lowpass_cutoff, 'plotfreqz', 0);
+            %% Separate filtering for EEG and ECG channels
+            % Find channel indices
+            ekg_idx = find(strcmp({EEG.chanlocs.labels}, 'EKG'));
+            non_ekg_idx = setdiff(1:EEG.nbchan, ekg_idx);
 
-            % Notch filter for main EEG data
-            nf_lowpass_cu = line_noise_frequency - 1;
-            nf_highpass_cu = line_noise_frequency + 1;
-            EEG = pop_eegfiltnew(EEG, 'locutoff', nf_lowpass_cu, 'hicutoff', nf_highpass_cu, 'revfilt', 1, 'plotfreqz', 0);
+            % Filter EEG and other channels (VEOG, HEOG)
+            EEG_temp = pop_select(EEG, 'channel', non_ekg_idx);
+            EEG_temp = pop_eegfiltnew(EEG_temp, 'hicutoff', high_cutoff, 'plotfreqz', 0);
+            EEG_temp = pop_eegfiltnew(EEG_temp, 'locutoff', low_cutoff, 'plotfreqz', 0);
+
+            % Notch filter for EEG data
+            nf_low_cu = line_noise_frequency - 1;
+            nf_high_cu = line_noise_frequency + 1;
+            EEG_temp = pop_eegfiltnew(EEG_temp, 'locutoff', nf_low_cu, 'hicutoff', nf_high_cu, 'revfilt', 1, 'plotfreqz', 0);
+
+            % Filter ECG separately with higher cutoff to preserve R-peak morphology
+            EKG_temp = pop_select(EEG, 'channel', ekg_idx);
+            EKG_temp = pop_eegfiltnew(EKG_temp, 'hicutoff', ecg_high_cutoff, 'plotfreqz', 0);
+            EKG_temp = pop_eegfiltnew(EKG_temp, 'locutoff', ecg_low_cutoff, 'plotfreqz', 0);
+
+            EKG_temp = pop_eegfiltnew(EKG_temp, 'locutoff', nf_low_cu, 'hicutoff', nf_high_cu, 'revfilt', 1, 'plotfreqz', 0);
+
+            % Merge channels back together
+            EEG.data = [EEG_temp.data; EKG_temp.data];
+            EEG.chanlocs = [EEG_temp.chanlocs, EKG_temp.chanlocs];
+            EEG.nbchan = length(EEG.chanlocs);
 
             %% Resample to sampling_rate
             EEG = pop_resample(EEG, sampling_rate);
@@ -112,36 +130,13 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             EEG = pop_interp(EEG, originalEEG.chanlocs, 'spherical');
 
             %% reject artifacts
-            % % mark artifacts that exceed threshold and remove them prior ICA
-            % [EEG, rejData] = trimOutlier_adjust_new(EEG, artefact_thresh, 40, 500);
-            % EEG.rejData = rejData;
+            % mark artifacts that exceed threshold and remove them
+            [EEG, rejData] = trimOutlier(EEG, 40, 500);
+            EEG.rejData = rejData;
 
-            % % only reject data if rejData is not empty and has valid format
-            % if ~isempty(rejData) && size(rejData, 2) >= 2 && size(rejData, 1) > 0
-            %     % ensure rejData contains valid integer values
-            %     rejData = round(rejData);
-            %     rejData(rejData < 1) = 1;
-            %     rejData(rejData > size(EEG.data, 2)) = size(EEG.data, 2);
-
-            %     % reject artifacts
-            %     EEG = pop_select(EEG, 'nopoint', [rejData(:, 1) rejData(:, 2)]);
-            %     fprintf('Rejected %d artifact segments for subject %s\n', size(rejData, 1), subjid);
-            % else
-            %     fprintf('No artifacts detected for subject %s\n', subjid);
-            % end
-
-            % %% run ICA
-            % % get rank of the ICA data
-            % dataRank = sum(eig(cov(double(EEG.data'))) > 1E-7);
-
-            % % run extended infomax ICA
-            % EEG_ica_result = pop_runica(EEG, 'icatype', 'runica', 'pca', dataRank, 'options', {'extended' 1});
-
-            % % Transfer ICA results to the main EEG dataset
-            % EEG.icawinv = EEG_ica_result.icawinv;
-            % EEG.icasphere = EEG_ica_result.icasphere;
-            % EEG.icaweights = EEG_ica_result.icaweights;
-            % EEG.icachansind = EEG_ica_result.icachansind;
+            if any(rejData ~= [1 1000])
+                EEG = pop_select(EEG, 'nopoint', [rejData(:, 1) rejData(:, 2)]);
+            end
 
             % save results
             pop_saveset(EEG, 'filename', subjid(1:12), 'filepath', preprocessed_data_path); % TODO:change

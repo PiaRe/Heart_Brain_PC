@@ -66,67 +66,75 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         %% Cluster-Based Correlation between Delta HEP and Delta ECG
         fprintf('\n--- Computing correlations between Delta HEP and Delta ECG ---\n');
 
-        % Prepare random time permutations for chance level
-        n_timepoints = 500; % Assuming 500 timepoints based on time window
-        random_time_order = zeros(corr_n_permu, n_timepoints);
-
-        for i_rand = 1:corr_n_permu
-            random_time_order(i_rand, :) = randperm(n_timepoints);
-        end
-
         % Remove avg field to work with trials
         comparison_data = cellfun(@(x) rmfield_safe(x, 'avg'), comparison_data, 'UniformOutput', false);
         reference_data = cellfun(@(x) rmfield_safe(x, 'avg'), reference_data, 'UniformOutput', false);
 
+        % Extract dimensions from data
+        n_timepoints = size(comparison_data{1}.trial, 3);
+        n_eeg_channels = 31;
+        ecg_channel_idx = 32; % Index of ECG channel
+
+        fprintf('Data dimensions: %d timepoints, %d EEG channels\n', n_timepoints, n_eeg_channels);
+
+        % Prepare random time permutations for chance level
+        random_time_permutations = zeros(corr_n_permu, n_timepoints);
+
+        for i_perm = 1:corr_n_permu
+            random_time_permutations(i_perm, :) = randperm(n_timepoints);
+        end
+
         % Compute differences and correlations
-        diff = comparison_data;
-        corr_empirical = comparison_data;
-        corr_chance = comparison_data;
+        delta_hep_ecg = comparison_data;
+        fisher_z_empirical = comparison_data;
+        fisher_z_chance = comparison_data;
 
         parfor subj = 1:length(comparison_data)
             % Compute delta EEG and delta ECG
             cfg = [];
             cfg.operation = 'subtract';
             cfg.parameter = 'trial';
-            diff{1, subj} = ft_math(cfg, comparison_data{1, subj}, reference_data{1, subj});
+            delta_hep_ecg{1, subj} = ft_math(cfg, comparison_data{1, subj}, reference_data{1, subj});
 
             % Compute empirical and chance correlations
-            diff{1, subj}.empirical.fisher_transf = zeros(31, n_timepoints);
-            diff{1, subj}.chance.fisher_transf = zeros(31, n_timepoints);
+            fisher_z_emp_subj = zeros(n_eeg_channels, n_timepoints);
+            fisher_z_chance_subj = zeros(n_eeg_channels, n_timepoints);
 
-            for elec = 1:31
+            for elec = 1:n_eeg_channels
 
                 for time = 1:n_timepoints
                     % Empirical correlation
-                    r_emp = corr(diff{1, subj}.trial(:, elec, time), diff{1, subj}.trial(:, 32, time), 'Type', corr_type);
-                    diff{1, subj}.empirical.fisher_transf(elec, time) = atanh(r_emp);
+                    r_empirical = corr(delta_hep_ecg{1, subj}.trial(:, elec, time), ...
+                        delta_hep_ecg{1, subj}.trial(:, ecg_channel_idx, time), 'Type', corr_type);
+                    fisher_z_emp_subj(elec, time) = atanh(r_empirical);
 
                     % Chance level correlation (time-permuted)
-                    diff_chance_loop = zeros(1, corr_n_permu);
+                    fisher_z_perm = zeros(1, corr_n_permu);
 
-                    for random_loop = 1:corr_n_permu
-                        r_chance = corr(diff{1, subj}.trial(:, elec, time), ...
-                            diff{1, subj}.trial(:, 32, random_time_order(random_loop, time)), 'Type', corr_type);
-                        diff_chance_loop(random_loop) = atanh(r_chance);
+                    for i_perm = 1:corr_n_permu
+                        r_chance = corr(delta_hep_ecg{1, subj}.trial(:, elec, time), ...
+                            delta_hep_ecg{1, subj}.trial(:, ecg_channel_idx, random_time_permutations(i_perm, time)), ...
+                            'Type', corr_type);
+                        fisher_z_perm(i_perm) = atanh(r_chance);
                     end
 
-                    diff{1, subj}.chance.fisher_transf(elec, time) = median(diff_chance_loop);
+                    fisher_z_chance_subj(elec, time) = median(fisher_z_perm);
                 end
 
             end
 
             % Prepare for statistics
-            corr_empirical{1, subj}.fisher_transf = diff{1, subj}.empirical.fisher_transf;
-            corr_chance{1, subj}.fisher_transf = diff{1, subj}.chance.fisher_transf;
-            corr_empirical{1, subj} = rmfield_safe(corr_empirical{1, subj}, 'trial');
-            corr_chance{1, subj} = rmfield_safe(corr_chance{1, subj}, 'trial');
+            fisher_z_empirical{1, subj}.fisher_transf = fisher_z_emp_subj;
+            fisher_z_chance{1, subj}.fisher_transf = fisher_z_chance_subj;
+            fisher_z_empirical{1, subj} = rmfield_safe(fisher_z_empirical{1, subj}, 'trial');
+            fisher_z_chance{1, subj} = rmfield_safe(fisher_z_chance{1, subj}, 'trial');
         end
 
         %% Statistical comparison: empirical vs chance
         fprintf('Running cluster-based permutation test...\n');
 
         cfg = [];
-        cfg.parameter = stat_params.parameter;
+        cfg.parameter = 'fisher_transf';
         cfg.method = stat_params.method;
         cfg.statistic = stat_params.statistic;
         cfg.correctm = stat_params.correctm;
@@ -142,7 +150,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         cfg.channel = stat_params.channel;
         cfg.latency = stat_params.latency;
 
-        Nsubj = length(corr_empirical);
+        Nsubj = length(fisher_z_empirical);
         design = zeros(2, Nsubj * 2);
         design(1, :) = [1:Nsubj 1:Nsubj];
         design(2, :) = [ones(1, Nsubj) ones(1, Nsubj) * 2];
@@ -150,16 +158,16 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         cfg.uvar = 1;
         cfg.ivar = 2;
 
-        stat_corr = ft_timelockstatistics(cfg, corr_empirical{1, :}, corr_chance{1, :});
+        stat_corr = ft_timelockstatistics(cfg, fisher_z_empirical{1, :}, fisher_z_chance{1, :});
 
         %% Create grand averages for plotting
         cfg = [];
         cfg.parameter = 'fisher_transf';
         cfg.channel = {'all', '-ECG'};
-        diff_corr_empirical_GA = ft_timelockgrandaverage(cfg, corr_empirical{1, :});
-        diff_corr_chance_GA = ft_timelockgrandaverage(cfg, corr_chance{1, :});
-        diff_corr_empirical_GA.mask = stat_corr.mask;
-        diff_corr_chance_GA.mask = stat_corr.mask;
+        GA_fisher_z_empirical = ft_timelockgrandaverage(cfg, fisher_z_empirical{1, :});
+        GA_fisher_z_chance = ft_timelockgrandaverage(cfg, fisher_z_chance{1, :});
+        GA_fisher_z_empirical.mask = stat_corr.mask;
+        GA_fisher_z_chance.mask = stat_corr.mask;
 
         %% Create multiplot
         figure('Position', [100 100 1200 1000]);
@@ -175,7 +183,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         cfg.showlabels = 'yes';
         cfg.showcomment = 'no';
 
-        ft_multiplotER(cfg, diff_corr_empirical_GA, diff_corr_chance_GA);
+        ft_multiplotER(cfg, GA_fisher_z_empirical, GA_fisher_z_chance);
 
         [beat_ldg, beatNorm_ldg] = format_beat_labels(beat_comparison, beat_reference, group_select, false);
         title(['CFA Control: ', beat_ldg, ' - ', beatNorm_ldg]);
