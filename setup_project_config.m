@@ -267,7 +267,7 @@ function config = setup_project_config()
     % Base CFA configuration
     config.cfa.base.paths = config.paths;
     config.cfa.base.hep_params = config.hep;
-    config.cfa.base.corr_type = 'Pearson';
+    config.cfa.base.corr_type = 'Spearman';
     config.cfa.base.corr_n_permu = 100;
 
     % Statistical analysis parameters for CFA correlation
