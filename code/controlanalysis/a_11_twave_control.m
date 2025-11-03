@@ -1,5 +1,5 @@
-function a_10_twave_control(epochs_path, error_log_path, output_path, twave_settings)
-    % A_10_TWAVE_CONTROL - T-Wave amplitude control analysis
+function a_11_twave_control(epochs_path, error_log_path, output_path, twave_settings)
+    % A_11_TWAVE_CONTROL - T-Wave amplitude control analysis
     %
     % This function performs control analysis for T-wave amplitude effects on the
     % heartbeat-evoked potential (HEP). The analysis examines whether differences in
