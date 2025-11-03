@@ -100,7 +100,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             all_analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}];
 
             % Epoch ECG data to create template
-            EEG_ICA.ECG.event = EEG_ICA.event; % Copy events before epoching
+            % EEG_ICA.ECG.event = EEG_ICA.event; % Copy events before epoching
             ECG_epoched = pop_epoch(EEG_ICA.ECG, all_analysis_beat_types, ica_analysis_window);
             ECG_epoched = pop_rmbase(ECG_epoched, [ica_analysis_window(1) 0]);
             ECG_template = mean(ECG_epoched.data, 3); % Create template from averaged epochs

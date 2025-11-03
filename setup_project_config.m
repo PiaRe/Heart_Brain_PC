@@ -126,7 +126,6 @@ function config = setup_project_config()
     % Configuration for a_2_import_events (PC group with external ECG event files)
     config.import_events.event_data_path = config.paths.event_data;
     config.import_events.error_log_path = config.paths.error_log_path;
-    config.import_events.analysis_beat_types = config.beat_types.analysis_labels;
     config.import_events.raw_file_labels = config.beat_types.raw_file_labels;
 
     % Configuration for a_2c_detect_rpeaks_control (control group without external ECG files)

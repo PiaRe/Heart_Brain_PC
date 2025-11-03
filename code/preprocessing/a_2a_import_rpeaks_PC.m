@@ -17,7 +17,6 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
     %   import_config         - Structure containing import configuration:
     %       .event_data_path       - Path to ECG event .txt files
     %       .error_log_path        - Path for saving error logs
-    %       .analysis_beat_types   - Beat types to consider for analysis
     %       .raw_file_labels       - Beat types as they appear in raw table
     %
     % Outputs:
@@ -33,7 +32,6 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
     %% Extract parameters from config
     event_data_path = import_config.event_data_path;
     error_log_path = import_config.error_log_path;
-    analysis_beat_types = import_config.analysis_beat_types;
     raw_file_labels = import_config.raw_file_labels;
 
     % Initialize variables
@@ -167,21 +165,7 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
                 EEG = pop_importevent(EEG, 'event', table2cell(eventBeat), 'fields', header, ...
                     'append', 'yes', 'align', NaN, 'timeunit', 1E-3);
 
-                % % Add ECG channel back to EEG data
-                % if isfield(EEG, 'ECG') && ~isempty(EEG.ECG)
-                %     % Remove existing ECG channel if present
-                %     ecg_idx = find(strcmp({EEG.chanlocs.labels}, 'ECG'));
-
-                %     if ~isempty(ecg_idx)
-                %         EEG = pop_select(EEG, 'nochannel', ecg_idx);
-                %     end
-
-                %     % Add ECG data from stored ECG struct
-                %     ECG_data = EEG.ECG.data(1, :);
-                %     EEG.data(end + 1, :, :) = ECG_data;
-                %     EEG.nbchan = size(EEG.data, 1);
-                %     EEG.chanlocs(end + 1).labels = 'ECG';
-                % end
+                EEG.ECG.event = EEG.event;
 
                 EEG = eeg_checkset(EEG);
 

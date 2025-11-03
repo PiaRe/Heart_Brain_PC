@@ -100,6 +100,7 @@ function a_2b_detect_rpeaks_control(preprocessed_data_path, output_path, rpeak_c
 
             end
 
+            EEG.event = EEG.ECG.event;
             % Verify EEG structure consistency
             EEG = eeg_checkset(EEG);
 
