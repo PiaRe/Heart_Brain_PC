@@ -268,10 +268,11 @@ function config = setup_project_config()
     config.cfa.base.paths = config.paths;
     config.cfa.base.hep_params = config.hep;
     config.cfa.base.corr_type = 'Spearman';
-    config.cfa.base.corr_n_permu = 100;
+    config.cfa.base.corr_n_permu = 2;
 
     % Statistical analysis parameters for CFA correlation
     config.cfa.base.statistical_analysis = config.stats.statistical_analysis_base;
+    config.cfa.base.statistical_analysis.parameter = 'fisher_transf';
     config.cfa.base.statistical_analysis.statistic = 'ft_statfun_depsamplesT';
     config.cfa.base.statistical_analysis.channel = {'all', '-ECG'};
     config.cfa.base.statistical_analysis.minnbchan = 2;
@@ -301,5 +302,23 @@ function config = setup_project_config()
     config.cfa.timewindow_pvc_0_vs_m3.beat_reference = '-3';
     config.cfa.timewindow_pvc_0_vs_m3.group_select = 'PVC';
     config.cfa.timewindow_pvc_0_vs_m3.time_window = [0.22, 0.35];
+
+    %% T-WAVE AMPLITUDE MATCHING CONTROL ANALYSIS
+    % Configuration for T-peak amplitude matching control analysis
+    % Matches PC+1 epochs with N/PC-3 based on T-peak amplitude
+
+    config.twave.settings.beat_comparison = '+1'; % PC+1
+    config.twave.settings.beat_reference = '-3'; % PC-3 (will also use iN)
+    config.twave.settings.group_select = 'PC'; % Both PAC and PVC combined
+    config.twave.settings.t_wave_window = [0.2, 0.4]; % 200-400ms after R-peak
+    config.twave.settings.cost_unmatched = 20; % Cost for unmatched epochs
+    config.twave.settings.input_filename = config.hep.output_filename_pc;
+
+    % Statistical analysis config for matched data
+    config.twave.settings.stats_config = config.stats.within_group;
+    config.twave.settings.stats_config.beat_comparison = '+1';
+    config.twave.settings.stats_config.beat_reference = '-3';
+    config.twave.settings.stats_config.group_select = 'PC';
+    config.twave.settings.stats_config.is_tpeak_matched = true; % Flag for T-peak matched analysis
 
 end

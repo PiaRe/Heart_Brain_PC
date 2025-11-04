@@ -43,12 +43,16 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         % Check if this is a PAC vs PVC comparison
         is_pac_pvc_comparison = isfield(stats_config, 'is_pac_pvc_comparison') && stats_config.is_pac_pvc_comparison;
 
+        % Check if this is a T-peak matched analysis
+        is_tpeak_matched = isfield(stats_config, 'is_tpeak_matched') && stats_config.is_tpeak_matched;
+
         fprintf('Configuration:\n');
         fprintf('  Beat comparison: %s\n', beat_comparison);
         fprintf('  Beat reference: %s\n', beat_reference);
         fprintf('  Group select: %s\n', group_select);
         fprintf('  Control analysis: %s\n', mat2str(is_control_analysis));
         fprintf('  PAC vs PVC comparison: %s\n', mat2str(is_pac_pvc_comparison));
+        fprintf('  T-peak matched: %s\n', mat2str(is_tpeak_matched));
 
         %% Load layout and neighbours for statistical analysis
         precomputed_path = stat_params.paths.precomputed_path;
@@ -340,7 +344,10 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
             downsample_suffix = '_downsampled';
         end
 
-        if is_pac_pvc_comparison
+        if is_tpeak_matched
+            output_filename = sprintf('timedomain_EEG_tpeak_matched_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
+            comparison_desc = sprintf('T-peak matched: %s vs %s', beat_comparison, beat_reference);
+        elseif is_pac_pvc_comparison
             output_filename = sprintf('timedomain_EEG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
             comparison_desc = sprintf('PAC vs PVC (%s beats)', beat_comparison);
         elseif is_control_analysis

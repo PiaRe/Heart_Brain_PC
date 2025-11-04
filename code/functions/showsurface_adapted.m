@@ -292,7 +292,7 @@ function han = showsurface_adapted(vertices, faces, para, varargin)
     figscalevec = figscale * [mins(1) maxs(1) mins(2) maxs(2) mins(3) maxs(3)];
 
     % keyboard
-    han = showvc_prog_plain(loc, tri, myviewdir, para);
+    han = showvc_prog_plain_adapted(loc, tri, myviewdir, para);
 
     hold on;
 

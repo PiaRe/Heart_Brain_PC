@@ -87,11 +87,11 @@ create_dirs(dirs_to_create);
 eeglab; close;
 
 %% Step 1: Initial preprocessing
-% fprintf('Running step 1a: Initial preprocessing of PC data for ICA');
-% a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica);
+fprintf('Running step 1a: Initial preprocessing of PC data for ICA');
+a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica);
 
-% fprintf('Running step 1b: Initial preprocessing of PC analysis data');
-% a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis);
+fprintf('Running step 1b: Initial preprocessing of PC analysis data');
+a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis);
 
 %% Step 2: Import events (timepoints of R-peaks)
 fprintf('Running step 2a: Importing ECG events and beats for PC ICA data');
@@ -154,7 +154,7 @@ a_9_source_analysis_timewise(config.paths.epochs_pc_path, config.paths.error_log
     config.paths.output_path, config.source.timewise_pc_p1_vs_m3, ...
     config.hep.output_filename_pc);
 
-%% Step 9: Control Analysis - Cluster-Based Correlation (CFA)
+% %% Step 9: Control Analysis - Cluster-Based Correlation (CFA)
 % fprintf('Running step 9a: CFA cluster-based correlation analysis - PC +1 vs -3 with ica_status=%s\n', config.hep.ica_status);
 % a_9_cfa_cluster_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
 %     config.paths.output_path, config.cfa.cluster_pc_p1_vs_m3, config.hep.output_filename_pc);
@@ -163,7 +163,7 @@ a_9_source_analysis_timewise(config.paths.epochs_pc_path, config.paths.error_log
 % a_9_cfa_cluster_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
 %     config.paths.output_path, config.cfa.cluster_pvc_0_vs_m3, config.hep.output_filename_pc);
 
-%% Step 10: Control Analysis - Time Window Correlation (CFA)
+% %% Step 10: Control Analysis - Time Window Correlation (CFA)
 % fprintf('Running step 10a: CFA time window correlation analysis - PC +1 vs -3 (tw: 0.12-0.2) with ica_status=%s\n', config.hep.ica_status);
 % a_10_cfa_timewindow_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
 %     config.paths.output_path, config.cfa.timewindow_pc_p1_vs_m3, config.hep.output_filename_pc);
@@ -172,10 +172,10 @@ a_9_source_analysis_timewise(config.paths.epochs_pc_path, config.paths.error_log
 % a_10_cfa_timewindow_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
 %     config.paths.output_path, config.cfa.timewindow_pvc_0_vs_m3, config.hep.output_filename_pc);
 
-%% Step 11: Control Analysis - T-Wave Amplitude
-% fprintf('Running step 11: Control analysis for T-Wave Amplitude\n');
+% %% Step 11: Control Analysis - T-Wave Amplitude
+% fprintf('Running step 11: Control analysis for T-Wave Amplitude Matching\n');
 % a_11_twave_control(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-%     config.paths.output_path, config.twave.settings);
+%     config.paths.output_path, config.twave.settings, config.hep.output_filename_pc);
 
 %% Step 12: Control Group - Complete Preprocessing and Statistics
 fprintf('Running step 12a: Initial preprocessing of control data for ICA\n');

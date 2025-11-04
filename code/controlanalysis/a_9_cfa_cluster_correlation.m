@@ -89,7 +89,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         fisher_z_empirical = comparison_data;
         fisher_z_chance = comparison_data;
 
-        parfor subj = 1:length(comparison_data)
+        for subj = 1:length(comparison_data)
             % Compute delta EEG and delta ECG
             cfg = [];
             cfg.operation = 'subtract';
@@ -123,9 +123,11 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
 
             end
 
-            % Prepare for statistics
+            % Store fisher z values as 'fisher_transf' field
             fisher_z_empirical{1, subj}.fisher_transf = fisher_z_emp_subj;
             fisher_z_chance{1, subj}.fisher_transf = fisher_z_chance_subj;
+
+            % Remove trial field
             fisher_z_empirical{1, subj} = rmfield_safe(fisher_z_empirical{1, subj}, 'trial');
             fisher_z_chance{1, subj} = rmfield_safe(fisher_z_chance{1, subj}, 'trial');
         end
@@ -134,7 +136,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         fprintf('Running cluster-based permutation test...\n');
 
         cfg = [];
-        cfg.parameter = 'fisher_transf';
+        cfg.parameter = stat_params.parameter;
         cfg.method = stat_params.method;
         cfg.statistic = stat_params.statistic;
         cfg.correctm = stat_params.correctm;

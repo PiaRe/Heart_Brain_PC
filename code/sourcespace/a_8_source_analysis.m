@@ -220,7 +220,6 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
         % Generate source space plot
         % Map data from cortex5K to cortex75K indices before visualization
         source_data_cortex75K = source_sig_visualization(cortex_surface.cortex5K.in_to_cortex75K_geod);
-        % addpath /data/pt_02584/Patty / premature_beats / scripts / source_modeling / eLORETA_files /;
         visualize_hep_source_brain(cortex_surface, source_data_cortex75K, ...
             [0 100], colormap_brain, 1, 'views', [1, 2, 3, 4, 5, 8], 'save', 0);
 
