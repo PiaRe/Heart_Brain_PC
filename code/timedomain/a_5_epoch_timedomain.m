@@ -156,9 +156,6 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
                 % Create epochs for reference condition
                 EEG_ref = pop_epoch(EEG, {current_reference_beat}, epoch_length / 1000, 'epochinfo', 'yes');
 
-                EEG_ref = pop_selectevent(EEG_ref, 'type', {'badECG'}, ...
-                    'deleteevents', 'off', 'deleteepochs', 'on', 'invertepochs', 'on');
-
                 if EEG_ref.trials >= min_trials_required
                     EEG_ref = eeg_checkset(EEG_ref);
 
@@ -346,10 +343,6 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
                         % Regular epoching for all other beat types
                         EEG_epoch = pop_epoch(EEG, {beat_type}, epoch_length / 1000, 'epochinfo', 'yes');
                     end
-
-                    % Remove epochs marked as badECG
-                    EEG_epoch = pop_selectevent(EEG_epoch, 'type', 'badECG', ...
-                        'deleteevents', 'off', 'deleteepochs', 'on', 'invertepochs', 'on');
 
                     % Check if we have enough epochs
                     if EEG_epoch.trials < min_trials_required
