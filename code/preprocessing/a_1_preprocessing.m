@@ -130,14 +130,9 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             EEG = pop_interp(EEG, originalEEG.chanlocs, 'spherical');
 
             %% reject artifacts
-            % mark artifacts that exceed threshold and remove them
+            % mark segments with artifacts that exceed threshold
             [EEG, rejData] = trimOutlier(EEG, 40, 500);
             EEG.rejData = rejData;
-
-            if any(rejData ~= [1 1000])
-                EEG = pop_select(EEG, 'nopoint', [rejData(:, 1) rejData(:, 2)]);
-                EEG.ECG = pop_select(EEG.ECG, 'nopoint', [rejData(:, 1) rejData(:, 2)]);
-            end
 
             % save results
             pop_saveset(EEG, 'filename', subjid(1:12), 'filepath', preprocessed_data_path); % TODO:change
