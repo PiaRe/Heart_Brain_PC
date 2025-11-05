@@ -112,7 +112,7 @@ function config = setup_project_config()
     config.prepro.base.line_noise_frequency = config.processing.line_noise_frequency;
     config.prepro.base.flatline_criterion = config.processing.flatline_criterion;
     config.prepro.base.eeg_channels = config.electrodes.eeg_channels;
-    
+
     % Configuration for ICA preprocessing (higher cutoff for ICA)
     config.prepro.ica = config.prepro.base;
     config.prepro.ica.high_cutoff = config.processing.ica_high_cutoff;
@@ -150,7 +150,7 @@ function config = setup_project_config()
     config.epoching.base.analysis_beat_types = config.beat_types.analysis_labels;
     config.epoching.base.min_trials_required = config.analysis.min_trials_required;
     config.epoching.base.eeg_channels = config.electrodes.eeg_channels;
-    
+
     % PC-specific epoching configuration
     config.epoching.pc = config.epoching.base;
     config.epoching.pc.subject_type = 'PC';
@@ -325,11 +325,12 @@ function config = setup_project_config()
     config.twave.settings.beat_reference = '-3'; % PC-3 (will also use iN)
     config.twave.settings.group_select = 'PC'; % Both PAC and PVC combined
     config.twave.settings.t_wave_window = [0.2, 0.4]; % 200-400ms after R-peak
-    config.twave.settings.cost_unmatched = 20; % Cost for unmatched epochs
+    config.twave.settings.cost_unmatched = 15; % Cost for unmatched epochs
     config.twave.settings.input_filename = config.hep.output_filename_pc;
     config.twave.settings.ecg_channel_idx = config.electrodes.ecg_channel_idx; % ECG channel index
 
-    % Use the EEG-specific twave config created in the loop above
-    config.twave.settings.stats_config = config.stats.eeg.twave;
+    % Store both EEG and ECG specific twave configs for the two statistical analyses
+    config.twave.settings.stats_config_eeg = config.stats.eeg.twave; % For EEG analysis
+    config.twave.settings.stats_config_ecg = config.stats.ecg.twave; % For ECG analysis
 
 end

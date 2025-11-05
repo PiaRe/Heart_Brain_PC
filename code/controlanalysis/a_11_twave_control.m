@@ -37,7 +37,7 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
         group_select = twave_settings.group_select; % 'PC'
         t_window = twave_settings.t_wave_window; % [0.2, 0.4]
         cost_unmatched = twave_settings.cost_unmatched; % 20
-        
+
         ecg_chan_idx = twave_settings.ecg_channel_idx;
 
         % Convert beat types to field names
@@ -172,7 +172,7 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
         stats_table = table();
 
         % Row labels
-        stats_table.Statistic = {'Mean'; 'Std'; 'Min'; 'Max'; 'p'};
+        stats_table.Statistic = {'Mean'; 'Std'; 'Min'; 'Max'; 'Cohen''s d'};
 
         % Unmatched PC-3
         stats_table.Unmatched_PCminus3 = [
@@ -219,14 +219,21 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
                                 NaN
                                 ];
 
-        % Perform t-tests for unmatched and matched
-        [~, p_unmatched] = ttest(all_t_peak_comparison_unmatched, all_t_peak_reference_unmatched);
-        [~, p_matched] = ttest(all_t_peak_comparison_matched, all_t_peak_reference_matched);
+        % Calculate effect sizes (Cohen's d) to show matching effectiveness
+        % Cohen's d: small = 0.2, medium = 0.5, large = 0.8
+        mean_diff_unmatched = mean(all_t_peak_comparison_unmatched) - mean(all_t_peak_reference_unmatched);
+        pooled_std_unmatched = sqrt((std(all_t_peak_comparison_unmatched) ^ 2 + std(all_t_peak_reference_unmatched) ^ 2) / 2);
+        cohens_d_unmatched = mean_diff_unmatched / pooled_std_unmatched;
 
-        stats_table.Unmatched_PCminus3(5) = p_unmatched;
-        stats_table.Unmatched_PCplus1(5) = p_unmatched;
-        stats_table.Matched_PCminus3(5) = p_matched;
-        stats_table.Matched_PCplus1(5) = p_matched;
+        mean_diff_matched = mean(all_t_peak_comparison_matched) - mean(all_t_peak_reference_matched);
+        pooled_std_matched = sqrt((std(all_t_peak_comparison_matched) ^ 2 + std(all_t_peak_reference_matched) ^ 2) / 2);
+        cohens_d_matched = mean_diff_matched / pooled_std_matched;
+
+        % Add Cohen's d to table instead of p-values
+        stats_table.Unmatched_PCminus3(5) = cohens_d_unmatched;
+        stats_table.Unmatched_PCplus1(5) = cohens_d_unmatched;
+        stats_table.Matched_PCminus3(5) = cohens_d_matched;
+        stats_table.Matched_PCplus1(5) = cohens_d_matched;
 
         % Display table
         fprintf('\nT-Peak Amplitude Matching Results:\n');
@@ -258,19 +265,39 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
         save(fullfile(epochs_path, output_filename_matched), 'allsubj_PC');
         fprintf('Matched data saved to: %s\n', fullfile(epochs_path, output_filename_matched));
 
-        %% Run cluster-based permutation test on matched data
+        %% Run cluster-based permutation test on matched ECG data (T-wave window)
+        fprintf('\n=== Running cluster-based permutation test on matched ECG data ===\n');
+        fprintf('Testing ECG differences between %s and %s in T-wave window [%.1f-%.1f ms]\n', ...
+            beat_comparison, beat_reference, t_window(1) * 1000, t_window(2) * 1000);
+
+        % Create ECG-specific stats config with T-wave window
+        stats_config_matched_ecg = twave_settings.stats_config_ecg;
+        stats_config_matched_ecg.beat_comparison = beat_comparison;
+        stats_config_matched_ecg.beat_reference = beat_reference;
+        stats_config_matched_ecg.group_select = group_select;
+        stats_config_matched_ecg.time_window = t_window; % For metadata
+
+        % Use T-wave window [0.2, 0.4] instead of full epoch
+        stats_config_matched_ecg.statistical_analysis.latency = t_window;
+
+        % Run ECG statistics on matched data (calls a_7_stats_timedomain_ECG)
+        a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, ...
+            stats_config_matched_ecg, output_filename_matched);
+
+        fprintf('ECG cluster-based permutation test completed.\n');
+
+        %% Run cluster-based permutation test on matched EEG data
         fprintf('\nRunning cluster-based permutation test on T-peak matched data...\n');
 
-        % Call a_6_stats_timedomain_EEG with matched data
-        % We need to create a temporary stats config for this
-        stats_config_matched = twave_settings.stats_config;
-        stats_config_matched.beat_comparison = beat_comparison;
-        stats_config_matched.beat_reference = beat_reference;
-        stats_config_matched.group_select = group_select;
+        % Create EEG-specific stats config (uses original time window from config)
+        stats_config_matched_eeg = twave_settings.stats_config_eeg;
+        stats_config_matched_eeg.beat_comparison = beat_comparison;
+        stats_config_matched_eeg.beat_reference = beat_reference;
+        stats_config_matched_eeg.group_select = group_select;
 
-        % Run statistics on matched data
+        % Run statistics on matched data (uses original latency from config, not T-wave window)
         a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, ...
-            stats_config_matched, output_filename_matched);
+            stats_config_matched_eeg, output_filename_matched);
 
         fprintf('\n=== T-Peak Amplitude Matching Control Analysis completed successfully ===\n\n');
 
