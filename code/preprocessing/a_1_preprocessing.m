@@ -20,7 +20,6 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     %       .low_cutoff            - Low-frequency cutoff
     %       .line_noise_frequency  - Line noise frequency for notch filtering
     %       .flatline_criterion    - Criterion for detecting flatline channels
-    %       .artefact_thresh    - Threshold to exclude artifacts
     %
     % Author: Pia Reinfeld, Paul Steinfath
 
@@ -37,6 +36,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     ecg_low_cutoff = prepro_config.ecg_low_cutoff;
     line_noise_frequency = prepro_config.line_noise_frequency;
     flatline_criterion = prepro_config.flatline_criterion;
+    eeg_channels = prepro_config.eeg_channels;
 
     %% get files
     files = find_files_by_extension(raw_data_path, '*.vhdr');
@@ -46,7 +46,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     prepFileList = {prepFiles.name};
 
     %% preprocess data and save as set
-    parfor i = 1:length(files) % TODO: change to parfor
+    parfor i = 1:length(files) 
 
         try
 
@@ -114,7 +114,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             EEG.ECG = pop_select(EEG, 'channel', {'EKG'});
             EEG.VEOG = pop_select(EEG, 'channel', {'VEOG'});
             EEG.HEOG = pop_select(EEG, 'channel', {'HEOG'});
-            EEG = pop_select(EEG, 'channel', 1:31);
+            EEG = pop_select(EEG, 'channel', eeg_channels);
 
             % keep backup for channel interpolation
             originalEEG = EEG;

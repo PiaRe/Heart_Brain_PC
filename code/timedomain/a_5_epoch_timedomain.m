@@ -55,6 +55,8 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
     subject_type = epoch_config.subject_type;
     min_trials_required = epoch_config.min_trials_required;
 
+    eeg_channels_range = epoch_config.eeg_channels;
+
     fprintf('Starting epoching for time domain HEP analysis for %s subjects...\n', subject_type);
 
     files = find_files_by_extension(post_ica_path, '*.set');
@@ -202,9 +204,6 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
             % Load EEG data
             EEG = pop_loadset('filename', filename, 'filepath', post_ica_path);
             EEG = eeg_checkset(EEG);
-
-            % Determine EEG channel range from actual data (after preprocessing)
-            eeg_channels_range = 1:EEG.nbchan;
 
             % Determine condition from filename
             if strcmp(subject_type, 'PC')

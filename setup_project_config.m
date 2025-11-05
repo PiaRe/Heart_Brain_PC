@@ -72,7 +72,9 @@ function config = setup_project_config()
     %% Electrode configuration
     config.electrodes.file = [config.paths.eeglab, '/plugins/dipfit/standard_BESA/standard-10-5-cap385.elp'];
     config.electrodes.exclude_channels = {'Fp1', 'Fp2'};
-    config.electrodes.eeg_channels = 1:31;
+    config.electrodes.eeg_channels = 1:31; % EEG channel indices (excluding ECG/EOG)
+    config.electrodes.ecg_channel_idx = 32; % ECG channel index (after reintegration)
+    config.electrodes.n_eeg_channels = length(config.electrodes.eeg_channels); % Number of EEG channels
 
     %% ICA cleaning thresholds (unified structure)
     config.thresholds.ecg_std_deviation = 1.5;
@@ -100,28 +102,26 @@ function config = setup_project_config()
     config.hep.output_filename_control = config.hep.get_output_filename('control', config.hep.baseline_option, config.hep.ica_status);
 
     %% Preprocessing configuration structures
-    % Configuration for a_1_preprocessing
-    config.prepro.ica.crop_marker_path = config.paths.crop_marker_path;
-    config.prepro.ica.error_log_path = config.paths.error_log_path;
-    config.prepro.ica.sampling_rate = config.processing.sampling_rate;
-    config.prepro.ica.electrode_file = config.electrodes.file;
+    % Base preprocessing configuration (shared parameters)
+    config.prepro.base.crop_marker_path = config.paths.crop_marker_path;
+    config.prepro.base.error_log_path = config.paths.error_log_path;
+    config.prepro.base.sampling_rate = config.processing.sampling_rate;
+    config.prepro.base.electrode_file = config.electrodes.file;
+    config.prepro.base.ecg_high_cutoff = config.processing.ecg_high_cutoff;
+    config.prepro.base.ecg_low_cutoff = config.processing.ecg_low_cutoff;
+    config.prepro.base.line_noise_frequency = config.processing.line_noise_frequency;
+    config.prepro.base.flatline_criterion = config.processing.flatline_criterion;
+    config.prepro.base.eeg_channels = config.electrodes.eeg_channels;
+    
+    % Configuration for ICA preprocessing (higher cutoff for ICA)
+    config.prepro.ica = config.prepro.base;
     config.prepro.ica.high_cutoff = config.processing.ica_high_cutoff;
     config.prepro.ica.low_cutoff = config.processing.ica_low_cutoff;
-    config.prepro.ica.ecg_high_cutoff = config.processing.ecg_high_cutoff;
-    config.prepro.ica.ecg_low_cutoff = config.processing.ecg_low_cutoff;
-    config.prepro.ica.line_noise_frequency = config.processing.line_noise_frequency;
-    config.prepro.ica.flatline_criterion = config.processing.flatline_criterion;
 
-    config.prepro.analysis.crop_marker_path = config.paths.crop_marker_path;
-    config.prepro.analysis.error_log_path = config.paths.error_log_path;
-    config.prepro.analysis.sampling_rate = config.processing.sampling_rate;
-    config.prepro.analysis.electrode_file = config.electrodes.file;
+    % Configuration for analysis preprocessing (lower cutoff for analysis)
+    config.prepro.analysis = config.prepro.base;
     config.prepro.analysis.high_cutoff = config.processing.high_cutoff;
     config.prepro.analysis.low_cutoff = config.processing.low_cutoff;
-    config.prepro.analysis.ecg_high_cutoff = config.processing.ecg_high_cutoff;
-    config.prepro.analysis.ecg_low_cutoff = config.processing.ecg_low_cutoff;
-    config.prepro.analysis.line_noise_frequency = config.processing.line_noise_frequency;
-    config.prepro.analysis.flatline_criterion = config.processing.flatline_criterion;
 
     % Configuration for a_2_import_events (PC group with external ECG event files)
     config.import_events.event_data_path = config.paths.event_data;
@@ -139,23 +139,25 @@ function config = setup_project_config()
     config.ica_cleaning.analysis_window = config.ica.analysis_window;
     config.ica_cleaning.thresholds = config.thresholds;
     config.ica_cleaning.analysis_beat_types = config.beat_types.analysis_labels;
+    config.ica_cleaning.eeg_channels = config.electrodes.eeg_channels;
 
     % Configuration for a_5_epoch_timedomain
-    config.epoching.pc.error_log_path = config.paths.error_log_path;
-    config.epoching.pc.epoch_length = config.hep.epoch_length;
-    config.epoching.pc.baseline_time = config.hep.baseline_time;
-    config.epoching.pc.baseline_option = config.hep.baseline_option;
-    config.epoching.pc.analysis_beat_types = config.beat_types.analysis_labels;
+    % Base epoching configuration (shared parameters)
+    config.epoching.base.error_log_path = config.paths.error_log_path;
+    config.epoching.base.epoch_length = config.hep.epoch_length;
+    config.epoching.base.baseline_time = config.hep.baseline_time;
+    config.epoching.base.baseline_option = config.hep.baseline_option;
+    config.epoching.base.analysis_beat_types = config.beat_types.analysis_labels;
+    config.epoching.base.min_trials_required = config.analysis.min_trials_required;
+    config.epoching.base.eeg_channels = config.electrodes.eeg_channels;
+    
+    % PC-specific epoching configuration
+    config.epoching.pc = config.epoching.base;
     config.epoching.pc.subject_type = 'PC';
-    config.epoching.pc.min_trials_required = config.analysis.min_trials_required;
 
-    config.epoching.control.error_log_path = config.paths.error_log_path;
-    config.epoching.control.epoch_length = config.hep.epoch_length;
-    config.epoching.control.baseline_time = config.hep.baseline_time;
-    config.epoching.control.baseline_option = config.hep.baseline_option;
-    config.epoching.control.analysis_beat_types = config.beat_types.analysis_labels;
+    % Control-specific epoching configuration
+    config.epoching.control = config.epoching.base;
     config.epoching.control.subject_type = 'control';
-    config.epoching.control.min_trials_required = config.analysis.min_trials_required;
 
     %% Statistics configuration - Base parameters shared by all analyses
     config.stats.statistical_analysis_base.parameter = 'avg';
@@ -175,9 +177,9 @@ function config = setup_project_config()
     %% COMPARISON TYPE 1: Within-group comparison (e.g., PAC+1 vs PAC-3)
     config.stats.within_group.statistical_analysis = config.stats.statistical_analysis_base;
     config.stats.within_group.statistical_analysis.statistic = 'ft_statfun_depsamplesT'; % Dependent samples
-    config.stats.within_group.beat_comparison = 'iN'; % e.g., -3, +1, iN, 0 (0 = PC itself)
-    config.stats.within_group.beat_reference = '-3'; % e.g., -3, +1, iN, 0
-    config.stats.within_group.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
+    config.stats.within_group.beat_comparison = '-3'; % e.g., -3, +1, iN, 0 (0 = PC itself)
+    config.stats.within_group.beat_reference = '0'; % e.g., -3, +1, iN, 0
+    config.stats.within_group.group_select = 'PVC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
 
     %% COMPARISON TYPE 2: PAC vs PVC
     config.stats.pac_vs_pvc.statistical_analysis = config.stats.statistical_analysis_base;
@@ -195,24 +197,34 @@ function config = setup_project_config()
     config.stats.pc_vs_control.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
     config.stats.pc_vs_control.control_filename = config.hep.output_filename_control;
 
-    %% CHANNEL-SPECIFIC CONFIGURATIONS
-    % Create separate namespaces for EEG and ECG analyses
-    comparison_types = {'within_group', 'pc_vs_control', 'pac_vs_pvc'};
+    %% COMPARISON TYPE 4: T-wave matched control analysis
+    config.stats.twave.statistical_analysis = config.stats.statistical_analysis_base;
+    config.stats.twave.statistical_analysis.statistic = 'ft_statfun_depsamplesT'; % Dependent samples
+    config.stats.twave.beat_comparison = '+1'; % PC+1
+    config.stats.twave.beat_reference = '-3'; % PC-3
+    config.stats.twave.group_select = 'PC'; % Both PAC and PVC combined
+    config.stats.twave.is_tpeak_matched = true; % Flag for T-peak matched analysis
 
-    % EEG channel configurations
-    % EEG uses: channel = {'all', '-ECG'}, minnbchan = 2
+    %% CHANNEL-SPECIFIC CONFIGURATIONS
+    % Create separate namespaces for EEG and ECG analyses using inheritance
+    comparison_types = {'within_group', 'pc_vs_control', 'pac_vs_pvc', 'twave'};
+
+    % EEG channel configurations (uses all channels except ECG)
     for i = 1:length(comparison_types)
         comp_type = comparison_types{i};
+        % Copy base comparison structure
         config.stats.eeg.(comp_type) = config.stats.(comp_type);
+        % Override channel-specific parameters
         config.stats.eeg.(comp_type).statistical_analysis.channel = {'all', '-ECG'};
         config.stats.eeg.(comp_type).statistical_analysis.minnbchan = 2;
     end
 
-    % ECG channel configurations
-    % ECG uses: channel = 'ECG', minnbchan = 0
+    % ECG channel configurations (uses only ECG channel)
     for i = 1:length(comparison_types)
         comp_type = comparison_types{i};
+        % Copy base comparison structure
         config.stats.ecg.(comp_type) = config.stats.(comp_type);
+        % Override channel-specific parameters
         config.stats.ecg.(comp_type).statistical_analysis.channel = 'ECG';
         config.stats.ecg.(comp_type).statistical_analysis.minnbchan = 0;
     end
@@ -253,7 +265,7 @@ function config = setup_project_config()
     config.source.timewise_pc_p1_vs_m3.group_select = 'PC';
     config.source.timewise_pc_p1_vs_m3.pc_plus1_window = [0.130, 0.200]; % Fixed window for PC+1
     config.source.timewise_pc_p1_vs_m3.pc_minus3_windows = {% Sliding windows for PC-3
-                                                            [0.130, 0.200], ... % Same window (baseline comparison)
+                                                            [0.130, 0.200], ... % Same window (standard comparison)
                                                                 [0.200, 0.270], ...
                                                                 [0.270, 0.340], ...
                                                                 [0.340, 0.410], ...
@@ -268,14 +280,16 @@ function config = setup_project_config()
     config.cfa.base.paths = config.paths;
     config.cfa.base.hep_params = config.hep;
     config.cfa.base.corr_type = 'Spearman';
-    config.cfa.base.corr_n_permu = 2;
+    config.cfa.base.corr_n_permu = 100;
+    config.cfa.base.n_eeg_channels = config.electrodes.n_eeg_channels;
+    config.cfa.base.ecg_channel_idx = config.electrodes.ecg_channel_idx;
 
     % Statistical analysis parameters for CFA correlation
     config.cfa.base.statistical_analysis = config.stats.statistical_analysis_base;
     config.cfa.base.statistical_analysis.parameter = 'fisher_transf';
     config.cfa.base.statistical_analysis.statistic = 'ft_statfun_depsamplesT';
     config.cfa.base.statistical_analysis.channel = {'all', '-ECG'};
-    config.cfa.base.statistical_analysis.minnbchan = 2;
+    config.cfa.base.statistical_analysis.minnbchan = 100;
 
     % Configuration 1: Delta HEP and delta ECG cluster-based correlation analysis (PC: +1 vs -3)
     config.cfa.cluster_pc_p1_vs_m3 = config.cfa.base;
@@ -313,12 +327,9 @@ function config = setup_project_config()
     config.twave.settings.t_wave_window = [0.2, 0.4]; % 200-400ms after R-peak
     config.twave.settings.cost_unmatched = 20; % Cost for unmatched epochs
     config.twave.settings.input_filename = config.hep.output_filename_pc;
+    config.twave.settings.ecg_channel_idx = config.electrodes.ecg_channel_idx; % ECG channel index
 
-    % Statistical analysis config for matched data
-    config.twave.settings.stats_config = config.stats.within_group;
-    config.twave.settings.stats_config.beat_comparison = '+1';
-    config.twave.settings.stats_config.beat_reference = '-3';
-    config.twave.settings.stats_config.group_select = 'PC';
-    config.twave.settings.stats_config.is_tpeak_matched = true; % Flag for T-peak matched analysis
+    % Use the EEG-specific twave config created in the loop above
+    config.twave.settings.stats_config = config.stats.eeg.twave;
 
 end

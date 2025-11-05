@@ -9,7 +9,15 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
     %   epochs_path      - Path to the epoched data directory
     %   error_log_path   - Path to save error logs
     %   output_path      - Path to save output results
-    %   cfa_config       - Structure containing CFA analysis settings
+    %   cfa_config       - Structure containing CFA analysis settings:
+    %       .beat_comparison       - Beat type for comparison (e.g., '+1', '0')
+    %       .beat_reference        - Beat type for reference (e.g., '-3')
+    %       .group_select          - Group to analyze ('PC', 'PAC', 'PVC')
+    %       .corr_type             - Correlation type (e.g., 'Spearman')
+    %       .time_window           - Time window for averaging [start, end] in seconds
+    %       .n_eeg_channels        - Number of EEG channels (from config)
+    %       .ecg_channel_idx       - ECG channel index (from config)
+    %       .statistical_analysis  - Statistical analysis parameters
     %   input_filename   - Name of the input file to load
     %
     % Outputs:
@@ -29,6 +37,9 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
         stat_params = cfa_config.statistical_analysis;
         corr_type = cfa_config.corr_type;
         time_window = cfa_config.time_window;
+
+        n_eeg_channels = cfa_config.n_eeg_channels;
+        ecg_channel_idx = cfa_config.ecg_channel_idx;
 
         % Convert beat types to valid MATLAB field names
         beat_comparison_field = beattype_to_fieldname(beat_comparison);
@@ -61,6 +72,14 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
 
         fprintf('Loaded data for %d subjects\n', length(comparison_data));
 
+        %% Create Template for Plotting
+        cfg = [];
+        cfg.latency = stat_params.latency;
+        cfg.parameter = 'avg';
+        cfg.channel = {'all', '-ECG'};
+        GA_template = ft_timelockgrandaverage(cfg, comparison_data{1, :});
+        correlation_result = GA_template;
+
         %% Interindividual Correlation in Averaged Time Window
         fprintf('\n--- Computing interindividual correlations in time window ---\n');
 
@@ -71,41 +90,35 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
         % Extract dimensions from data
         n_subjects = length(comparison_data);
         n_all_channels = size(comparison_data{1}.trial, 2);
-        n_eeg_channels = 31;
-        ecg_channel_idx = 32; % Index of ECG channel
 
-        fprintf('Data dimensions: %d subjects, %d channels (31 EEG + 1 ECG)\n', n_subjects, n_all_channels); % Compute differences and average in time window
+        % Compute differences and average in time window
         subject_avg_eeg_ecg = zeros(n_subjects, n_all_channels);
-        delta_hep_ecg = comparison_data;
 
         parfor subj = 1:n_subjects
             % Compute delta EEG and delta ECG
             cfg = [];
             cfg.operation = 'subtract';
             cfg.parameter = 'trial';
-            delta_hep_ecg{1, subj} = ft_math(cfg, comparison_data{1, subj}, reference_data{1, subj});
+            delta_hep_ecg_subj = ft_math(cfg, comparison_data{1, subj}, reference_data{1, subj});
 
             % Select time window
             cfg = [];
             cfg.latency = time_window;
-            delta_hep_ecg_tw = ft_selectdata(cfg, delta_hep_ecg{1, subj});
+            delta_hep_ecg_tw = ft_selectdata(cfg, delta_hep_ecg_subj);
 
             % Average across time for each trial, then across trials
             trials_avg_across_time = mean(delta_hep_ecg_tw.trial, 3);
             subject_avg_eeg_ecg(subj, :) = mean(trials_avg_across_time, 1);
         end
 
-        %% Correlate mean time-window EEG with mean time-window ECG across subjects
-        cfg = [];
-        cfg.latency = stat_params.latency;
-        cfg.parameter = 'avg';
-        cfg.channel = {'all', '-ECG'};
-        GA_template = ft_timelockgrandaverage(cfg, comparison_data{1, :});
-
-        correlation_result = GA_template;
+        %% Correlate mean time-window EEG with mean time-window ECG across subject
         [correlation_result.correl, correlation_result.pval] = ...
             corr(subject_avg_eeg_ecg(:, 1:n_eeg_channels), subject_avg_eeg_ecg(:, ecg_channel_idx), ...
             'type', corr_type, 'tail', 'both');
+
+        % Store min/max before replicating across time
+        min_corr = min(correlation_result.correl);
+        max_corr = max(correlation_result.correl);
 
         % Replicate correlation values across time for topoplot
         n_timepoints_plot = size(GA_template.avg, 2);
@@ -139,7 +152,7 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
 
         ft_topoplotER(cfg, correlation_result);
 
-        [beat_ldg, beatNorm_ldg] = format_beat_labels(beat_comparison, beat_reference, group_select, false);
+        [beat_ldg, beatNorm_ldg] = create_condition_labels(beat_comparison, beat_reference, group_select, false, false, false);
         title(['CFA Control: corr(HEP_{', beat_ldg, '-', beatNorm_ldg, '}, ECG_{', beat_ldg, '-', beatNorm_ldg, '})'], ...
             'FontSize', 10);
 
@@ -152,16 +165,17 @@ function a_10_cfa_timewindow_correlation(epochs_path, error_log_path, output_pat
         c.Label.String = 'Correlation';
 
         annotation('textbox', [0, 0.02, 1, 0.05], 'FontSize', 10, ...
-            'String', sprintf('min(corr): %.2f; max(corr): %.2f', ...
-            min(correlation_result.correl(1, :)), max(correlation_result.correl(1, :))), ...
+            'String', sprintf('min(corr): %.2f; max(corr): %.2f', min_corr, max_corr), ...
             'EdgeColor', 'none', 'HorizontalAlignment', 'center');
         annotation('textbox', [0, 0.08, 1, 0.05], 'FontSize', 10, ...
             'String', sprintf('averaged time window: %.2f s - %.2f s', time_window(1), time_window(2)), ...
             'EdgeColor', 'none', 'HorizontalAlignment', 'center');
 
         %% Save
-        file_name = generate_filename('cfa_timewindow_correlation', beat_comparison, beat_reference, group_select, ...
-            stat_params.hep_params.baseline_option, stat_params.hep_params.ica_status);
+        % Generate filename (preprocessing is fixed for CFA, no need for baseline/ica in filename)
+        file_name = sprintf('cfa_timewindow_correlation_%s_%s_vs_%s', ...
+            group_select, beat_comparison, beat_reference);
+
         set(gcf, 'units', 'centimeters', 'pos', [0 0 9.5 6.5]);
         pos = get(gcf, 'Position');
         set(gcf, 'PaperPositionMode', 'Auto', 'PaperUnits', 'centimeters', 'PaperSize', [pos(3), pos(4)]);

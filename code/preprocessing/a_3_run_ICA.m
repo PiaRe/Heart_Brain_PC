@@ -51,6 +51,8 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
     threshold_config = ica_config.thresholds;
     analysis_beat_types = ica_config.analysis_beat_types;
 
+    eeg_channels = ica_config.eeg_channels;
+
     %% get file names
     files = find_files_by_extension(pre_ica_path, '*.set');
 
@@ -169,12 +171,12 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
 
             %% Some quality assessment (QA) Plots
 
-            % Plot spectogram
-            figure; plot_spec(EEGclean.data(1:31, :)', EEG.srate, 'f_max', 70);
+            % Plot spectogram (using configured EEG channels)
+            figure; plot_spec(EEGclean.data(eeg_channels, :)', EEG.srate, 'f_max', 70);
             saveas(gcf, [qa_path, subjid, '/', subjid, '_PSD_post_ICA.png'], 'png');
 
             % pre-clean PSD
-            figure; plot_spec(EEG.data(1:31, :)', EEG.srate, 'f_max', 70);
+            figure; plot_spec(EEG.data(eeg_channels, :)', EEG.srate, 'f_max', 70);
             saveas(gcf, [qa_path, subjid, '/', subjid, '_PSD_pre_ICA.png'], 'png');
 
             % plot removed components

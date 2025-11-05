@@ -1,6 +1,5 @@
 function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, cfa_config, input_filename)
     % A_9_CFA_CLUSTER_CORRELATION - Cluster-based correlation analysis for CFA control
-    %
     % This function performs cluster-based correlation analysis between delta HEP
     % (change in EEG) and delta ECG to control for cardiac field artifacts.
     % The analysis compares empirical correlations against chance-level correlations
@@ -10,7 +9,15 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
     %   epochs_path      - Path to the epoched data directory
     %   error_log_path   - Path to save error logs
     %   output_path      - Path to save output results
-    %   cfa_config       - Structure containing CFA analysis settings
+    %   cfa_config       - Structure containing CFA analysis settings:
+    %       .beat_comparison       - Beat type for comparison (e.g., '+1', '0')
+    %       .beat_reference        - Beat type for reference (e.g., '-3')
+    %       .group_select          - Group to analyze ('PC', 'PAC', 'PVC')
+    %       .corr_type             - Correlation type (e.g., 'Spearman')
+    %       .corr_n_permu          - Number of permutations for chance level
+    %       .n_eeg_channels        - Number of EEG channels (from config)
+    %       .ecg_channel_idx       - ECG channel index (from config)
+    %       .statistical_analysis  - Statistical analysis parameters
     %   input_filename   - Name of the input file to load
     %
     % Outputs:
@@ -30,6 +37,9 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         stat_params = cfa_config.statistical_analysis;
         corr_type = cfa_config.corr_type;
         corr_n_permu = cfa_config.corr_n_permu;
+
+        n_eeg_channels = cfa_config.n_eeg_channels;
+        ecg_channel_idx = cfa_config.ecg_channel_idx;
 
         % Convert beat types to valid MATLAB field names
         beat_comparison_field = beattype_to_fieldname(beat_comparison);
@@ -70,12 +80,8 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         comparison_data = cellfun(@(x) rmfield_safe(x, 'avg'), comparison_data, 'UniformOutput', false);
         reference_data = cellfun(@(x) rmfield_safe(x, 'avg'), reference_data, 'UniformOutput', false);
 
-        % Extract dimensions from data
+        % Extract time dimensions from data
         n_timepoints = size(comparison_data{1}.trial, 3);
-        n_eeg_channels = 31;
-        ecg_channel_idx = 32; % Index of ECG channel
-
-        fprintf('Data dimensions: %d timepoints, %d EEG channels\n', n_timepoints, n_eeg_channels);
 
         % Prepare random time permutations for chance level
         random_time_permutations = zeros(corr_n_permu, n_timepoints);
@@ -192,14 +198,15 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
 
         ft_multiplotER(cfg, GA_fisher_z_empirical, GA_fisher_z_chance);
 
-        [beat_ldg, beatNorm_ldg] = format_beat_labels(beat_comparison, beat_reference, group_select, false);
+        [beat_ldg, beatNorm_ldg] = create_condition_labels(beat_comparison, beat_reference, group_select, false, false, true);
         title(['CFA Control: ', beat_ldg, ' - ', beatNorm_ldg]);
         legend('Empirical Correlation \Delta EEG - \Delta ECG', '', '', 'Chance Level Correlation \Delta EEG - \Delta ECG', ...
             'location', 'southwest');
 
         %% Save
-        file_name = generate_filename('cfa_cluster_correlation', beat_comparison, beat_reference, group_select, ...
-            stat_params.hep_params.baseline_option, stat_params.hep_params.ica_status);
+        file_name = sprintf('cfa_cluster_correlation_%s_%s_vs_%s', ...
+            group_select, beat_comparison, beat_reference);
+
         set(gcf, 'units', 'centimeters', 'pos', [0 0 30 25]);
         exportgraphics(gcf, fullfile(output_path, [file_name, '.pdf']), 'ContentType', 'vector', 'BackgroundColor', 'none');
         close(gcf);

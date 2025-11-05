@@ -9,7 +9,14 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
     %   epochs_path      - Path to the epoched data directory
     %   error_log_path   - Path to save error logs
     %   output_path      - Path to save output results
-    %   twave_settings   - Structure containing T-wave analysis settings
+    %   twave_settings   - Structure containing T-wave analysis settings:
+    %       .beat_comparison       - Beat type for comparison (typically '+1')
+    %       .beat_reference        - Beat type for reference (typically '-3')
+    %       .group_select          - Group to analyze ('PC', 'PAC', 'PVC')
+    %       .t_wave_window         - Time window for T-wave [start, end] in seconds
+    %       .cost_unmatched        - Cost for unmatched epochs in matching algorithm
+    %       .ecg_channel_idx       - (Optional) ECG channel index from config
+    %       .stats_config          - Statistical analysis configuration
     %   input_filename   - Name of input .mat file with epoched data
     %
     % Outputs:
@@ -30,6 +37,8 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
         group_select = twave_settings.group_select; % 'PC'
         t_window = twave_settings.t_wave_window; % [0.2, 0.4]
         cost_unmatched = twave_settings.cost_unmatched; % 20
+        
+        ecg_chan_idx = twave_settings.ecg_channel_idx;
 
         % Convert beat types to field names
         beat_comparison_field = beattype_to_fieldname(beat_comparison);
@@ -74,16 +83,6 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
 
             if isempty(comparison_data{subj}) || ~isfield(comparison_data{subj}, 'trial')
                 fprintf('  Subject %d: No data available, skipping\n', subj);
-                matched_comparison_data{subj} = [];
-                matched_reference_data{subj} = [];
-                continue
-            end
-
-            % Get ECG channel index (should be channel 32)
-            ecg_chan_idx = find(strcmp(comparison_data{subj}.label, 'ECG'));
-
-            if isempty(ecg_chan_idx)
-                warning('Subject %d: ECG channel not found, skipping', subj);
                 matched_comparison_data{subj} = [];
                 matched_reference_data{subj} = [];
                 continue
@@ -250,13 +249,13 @@ function a_11_twave_control(epochs_path, error_log_path, output_path, twave_sett
         fprintf('Number of subjects with matched data: %d (out of %d total)\n', n_subjects_with_matches, n_subj);
 
         % Create output structure with matched data
-        allsubj_matched = struct();
-        allsubj_matched.(group_select).(beat_comparison_field) = matched_comparison_data;
-        allsubj_matched.(group_select).(beat_reference_field) = matched_reference_data;
+        allsubj_PC = struct();
+        allsubj_PC.(group_select).(beat_comparison_field) = matched_comparison_data;
+        allsubj_PC.(group_select).(beat_reference_field) = matched_reference_data;
 
         % Save matched data
         output_filename_matched = strrep(input_filename, '.mat', '_tpeak_matched.mat');
-        save(fullfile(epochs_path, output_filename_matched), 'allsubj_matched');
+        save(fullfile(epochs_path, output_filename_matched), 'allsubj_PC');
         fprintf('Matched data saved to: %s\n', fullfile(epochs_path, output_filename_matched));
 
         %% Run cluster-based permutation test on matched data
