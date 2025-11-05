@@ -2,7 +2,7 @@ function a_2b_detect_rpeaks_control(preprocessed_data_path, output_path, rpeak_c
     % A_2B_DETECT_RPEAKS_CONTROL - Detect R-peaks and add heartbeat events for control group
     %
     % This function detects R-peaks in ECG data for the control group where no
-    % external ECG event files are available. It uses the EOG_EKG channel stored
+    % external ECG event files are available. It uses the ECG channel stored
     % in the EEG structure to perform automated R-peak detection and adds heartbeat
     % events to the EEG structure.
     %
@@ -26,7 +26,7 @@ function a_2b_detect_rpeaks_control(preprocessed_data_path, output_path, rpeak_c
     % Requirements:
     %   - EEGLAB toolbox
     %   - HEPLAB toolbox (for heplab_slowdetect function)
-    %   - EEG.EOG_EKG field containing ECG data
+    %   - EEG.ECG field containing ECG data
     %
     % Author: Pia Reinfeld, Paul Steinfath
     % Date: October 2025
@@ -57,12 +57,12 @@ function a_2b_detect_rpeaks_control(preprocessed_data_path, output_path, rpeak_c
             EEG = pop_loadset('filename', EEGfiles(i).name, 'filepath', preprocessed_data_path);
             fileName = EEGfiles(i).name(1:12);
 
-            % Check if EOG_EKG field exists
+            % Check if ECG field exists
             if ~isfield(EEG, 'ECG') || isempty(EEG.ECG)
                 error('ECG field not found or empty for file %s', fileName);
             end
 
-            % Extract ECG data from EOG_EKG field
+            % Extract ECG data from ECG field
             ECG = EEG.ECG.data(1, :);
 
             % Detect R-peaks using specified method
@@ -100,7 +100,7 @@ function a_2b_detect_rpeaks_control(preprocessed_data_path, output_path, rpeak_c
 
             end
 
-            EEG.event = EEG.ECG.event;
+            EEG.ECG.event = EEG.event;
             % Verify EEG structure consistency
             EEG = eeg_checkset(EEG);
 
