@@ -6,7 +6,7 @@ function field_name = beattype_to_fieldname(beat_type)
     % Special case: iPAC and iPVC are mapped to 'zero'.
     %
     % Input:
-    %   beat_type - String representing a beat type (e.g., 'PAC+1', 'PVC-2', 'iN')
+    %   beat_type - String representing a beat type (e.g., 'PAC+1', 'PVC-2', 'iN', '0')
     %
     % Output:
     %   field_name - Generic MATLAB field name string (e.g., 'plus1', 'minus2', 'zero', 'iN')

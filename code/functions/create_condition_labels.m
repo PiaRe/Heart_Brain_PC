@@ -1,12 +1,13 @@
-function [comparison_label, reference_label] = create_condition_labels(beat_comparison, beat_reference, group_select, is_control_analysis, is_pac_pvc_comparison)
+function [comparison_label, reference_label] = create_condition_labels(beat_comparison, beat_reference, group_select, is_control_analysis, is_pac_pvc_comparison, is_correlation_analysis)
     % CREATE_CONDITION_LABELS - Generate automatic labels for plotting
     %
     % Inputs:
     %   beat_comparison        - Comparison beat type (e.g., '-3', '-2', '-1', '0', '1', '2', 'iN')
     %   beat_reference         - Reference beat type (e.g., 'iN', '0', '-3', etc.)
     %   group_select           - Group selection ('PC', 'PAC', 'PVC')
-    %   is_control_analysis    - Boolean for control group comparison
-    %   is_pac_pvc_comparison  - Boolean for PAC vs PVC comparison
+    %   is_control_analysis    - (Optional) Boolean for control group comparison (default: false)
+    %   is_pac_pvc_comparison  - (Optional) Boolean for PAC vs PVC comparison (default: false)
+    %   is_correlation_analysis - (Optional) Boolean for correlation analysis (default: false)
     %
     % Outputs:
     %   comparison_label - Formatted label for comparison condition
@@ -16,6 +17,19 @@ function [comparison_label, reference_label] = create_condition_labels(beat_comp
     %       'iN' -> 'N'
     %       '0'  -> group name ('PAC', 'PVC', 'PC')
     %       '-3', '-2', '-1', '1', '2' -> 'PAC-3', 'PAC+1', etc.
+
+    % Handle optional parameters with defaults
+    if nargin < 4 || isempty(is_control_analysis)
+        is_control_analysis = false;
+    end
+
+    if nargin < 5 || isempty(is_pac_pvc_comparison)
+        is_pac_pvc_comparison = false;
+    end
+
+    if nargin < 6 || isempty(is_correlation_analysis)
+        is_correlation_analysis = false;
+    end
 
     % Function to format beat label based on beat type and group
     function label = format_beat_label(beat_str, group)
@@ -44,7 +58,12 @@ function [comparison_label, reference_label] = create_condition_labels(beat_comp
     end
 
     % Generate labels based on comparison type
-    if is_pac_pvc_comparison
+    if is_correlation_analysis
+        % CFA Correlation analysis: special labels with Delta symbol
+        comparison_label = 'Empirical Correlation between \Delta EEG and \Delta ECG';
+        reference_label = 'Chance Level Correlation between \Delta EEG and \Delta ECG';
+
+    elseif is_pac_pvc_comparison
         % PAC vs PVC comparison: same beat type, different groups
         comp_base = format_beat_label(beat_comparison, 'PAC');
         ref_base = format_beat_label(beat_reference, 'PVC');

@@ -433,7 +433,7 @@ function a_7_stats_timedomain_ECG(epochs_path, error_log_path, output_path, stat
 
         % Generate automatic labels
         [comparison_label, reference_label] = create_condition_labels(beat_comparison, beat_reference, ...
-            group_select, is_control_analysis, is_pac_pvc_comparison);
+            group_select, is_control_analysis, is_pac_pvc_comparison, false);
 
         % Compute grand averages for plotting
         cfg_ga = [];

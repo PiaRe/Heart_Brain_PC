@@ -213,7 +213,7 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
         % Create title for visualization
         % Generate automatic labels
         [comparison_label, reference_label] = create_condition_labels(beat_comparison, beat_reference, ...
-            group_select, false, false);
+            group_select, false, false, false);
         title_name = sprintf('$\\textrm{HEP}_{\\textrm{%s}}\\textrm{ vs. }\\textrm{HEP}_{\\textrm{%s}}$', ...
             comparison_label, reference_label);
 
