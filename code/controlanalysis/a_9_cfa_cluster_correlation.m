@@ -156,6 +156,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         cfg.minnbchan = stat_params.minnbchan;
         cfg.layout = layout;
         cfg.tail = stat_params.tail;
+        cfg.correcttail = stat_params.correcttail;
         cfg.clustertail = stat_params.clustertail;
         cfg.alpha = stat_params.alpha;
         cfg.numrandomization = stat_params.numrandomization;

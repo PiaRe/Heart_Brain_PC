@@ -5,7 +5,7 @@ function config = setup_project_config()
     % Heart-Brain premature contractions analysis pipeline.
     %
     % Returns:
-    %   config - Structure containing all project configurations
+    %   config - Structure containing all configurations
     %
     % Author: Pia Reinfeld
 
@@ -25,7 +25,6 @@ function config = setup_project_config()
     config.paths.crop_marker_path = [config.paths.base_data, 'raw/crop_marker/'];
     config.paths.event_data = [config.paths.base_data, 'raw/event_marker/'];
     config.paths.no_ica_pc_path = [config.paths.base_data, 'ICA/no/PC/'];
-    config.paths.no_ica_control_path = [config.paths.base_data, 'ICA/no/control/'];
     config.paths.pre_ica_pc_path = [config.paths.base_data, 'ICA/pre/PC/'];
     config.paths.pre_ica_control_path = [config.paths.base_data, 'ICA/pre/control/'];
     config.paths.post_ica_pc_path = [config.paths.base_data, 'ICA/post/PC/'];
@@ -166,6 +165,7 @@ function config = setup_project_config()
     config.stats.statistical_analysis_base.clusteralpha = 0.05;
     config.stats.statistical_analysis_base.clusterstatistic = 'maxsum';
     config.stats.statistical_analysis_base.tail = 0;
+    config.stats.statistical_analysis_base.correcttail = 'prob';
     config.stats.statistical_analysis_base.clustertail = 0;
     config.stats.statistical_analysis_base.alpha = 0.025;
     config.stats.statistical_analysis_base.numrandomization = 5000;
@@ -194,7 +194,7 @@ function config = setup_project_config()
     config.stats.pc_vs_control.beat_comparison = 'iN'; % iN beats from PC group
     config.stats.pc_vs_control.beat_reference = 'iN'; % iN beats from control group
     config.stats.pc_vs_control.is_control_analysis = true;
-    config.stats.pc_vs_control.group_select = 'PC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
+    config.stats.pc_vs_control.group_select = 'PVC'; % 'PAC', 'PVC', 'PC' (PC = both combined)
     config.stats.pc_vs_control.control_filename = config.hep.output_filename_control;
 
     %% COMPARISON TYPE 4: T-wave matched control analysis
@@ -303,12 +303,12 @@ function config = setup_project_config()
     config.cfa.cluster_pvc_0_vs_m3.beat_reference = '-3';
     config.cfa.cluster_pvc_0_vs_m3.group_select = 'PVC';
 
-    % Configuration 3: Averaged time-window correlation analysis (PC: +1 vs -3, tw: 0.12-0.2)
+    % Configuration 3: Averaged time-window correlation analysis (PC: +1 vs -3, tw: 0.13-0.2)
     config.cfa.timewindow_pc_p1_vs_m3 = config.cfa.base;
     config.cfa.timewindow_pc_p1_vs_m3.beat_comparison = '+1';
     config.cfa.timewindow_pc_p1_vs_m3.beat_reference = '-3';
     config.cfa.timewindow_pc_p1_vs_m3.group_select = 'PC';
-    config.cfa.timewindow_pc_p1_vs_m3.time_window = [0.12, 0.2];
+    config.cfa.timewindow_pc_p1_vs_m3.time_window = [0.13, 0.2];
 
     % Configuration 4: Averaged time-window correlation analysis (PVC: 0 vs -3, tw: 0.22-0.35)
     config.cfa.timewindow_pvc_0_vs_m3 = config.cfa.base;
@@ -325,12 +325,16 @@ function config = setup_project_config()
     config.twave.settings.beat_reference = '-3'; % PC-3 (will also use iN)
     config.twave.settings.group_select = 'PC'; % Both PAC and PVC combined
     config.twave.settings.t_wave_window = [0.2, 0.4]; % 200-400ms after R-peak
-    config.twave.settings.cost_unmatched = 15; % Cost for unmatched epochs
+    config.twave.settings.cost_unmatched = 50; % Starting cost for unmatched epochs
+    config.twave.settings.cost_decrement = 5; % Amount to decrease cost per iteration for stricter matching
+    config.twave.settings.min_cost = 5; % Minimum cost threshold to prevent over-matching and too little remaining trials
     config.twave.settings.input_filename = config.hep.output_filename_pc;
     config.twave.settings.ecg_channel_idx = config.electrodes.ecg_channel_idx; % ECG channel index
 
     % Store both EEG and ECG specific twave configs for the two statistical analyses
     config.twave.settings.stats_config_eeg = config.stats.eeg.twave; % For EEG analysis
+    config.twave.settings.stats_config_eeg.statistical_analysis.latency = [0.13, 0.2];
     config.twave.settings.stats_config_ecg = config.stats.ecg.twave; % For ECG analysis
+    config.twave.settings.stats_config_ecg.statistical_analysis.latency = [0.13, 0.2];
 
 end
