@@ -1,4 +1,4 @@
-function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stats_config, input_filename, epochs_path_control)
+function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stats_config, input_filename, epochs_path_control)
     % A_6_STATS_TIMEDOMAIN_EEG - Statistical analysis of HEP in time domain
     %
     % This function performs statistical analysis of heartbeat evoked potentials
@@ -11,6 +11,10 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
     %   stats_config       - Statistics configuration structure (config.stats)
     %   input_filename     - Name of the input file to load
     %   epochs_path_control - Optional: Path to control group data for group comparison
+    %
+    % Outputs:
+    %   is_significant     - Boolean indicating whether significant clusters were found
+    %                        (true if any positive or negative cluster has p < alpha)
     %
     % The function loads epoched data, performs statistical comparisons based
     % on the configured parameters, and saves results.
@@ -301,6 +305,7 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         cfg.clusterstatistic = stat_params.clusterstatistic;
         cfg.minnbchan = stat_params.minnbchan;
         cfg.tail = stat_params.tail;
+        cfg.correcttail = stat_params.correcttail; 
         cfg.clustertail = stat_params.clustertail;
         cfg.alpha = stat_params.alpha;
         cfg.numrandomization = stat_params.numrandomization;
@@ -375,6 +380,23 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
 
         save(output_file_path, 'save_data');
         fprintf('Results saved to: %s\n', output_file_path);
+
+        %% Determine if significant clusters were found
+        is_significant = false;
+        
+        if isfield(stat, 'posclusters') && ~isempty(stat.posclusters)
+            sig_pos = find([stat.posclusters.prob] < stat_params.alpha);
+            if ~isempty(sig_pos)
+                is_significant = true;
+            end
+        end
+        
+        if isfield(stat, 'negclusters') && ~isempty(stat.negclusters)
+            sig_neg = find([stat.negclusters.prob] < stat_params.alpha);
+            if ~isempty(sig_neg)
+                is_significant = true;
+            end
+        end
 
         %% Display results summary
         if isfield(stat, 'posclusters') && ~isempty(stat.posclusters)
@@ -503,6 +525,9 @@ function a_6_stats_timedomain_EEG(epochs_path, error_log_path, output_path, stat
         close all;
 
     catch ME
+        % Initialize output variable in error case
+        is_significant = false;
+        
         error_msg = sprintf('Error in a_6_stats_timedomain_EEG: %s\n%s', ME.message, getReport(ME));
         fprintf('%s\n', error_msg); % Log error
         error_file = fullfile(error_log_path, sprintf('stats_timedomain_error_%s.txt', char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'))));
