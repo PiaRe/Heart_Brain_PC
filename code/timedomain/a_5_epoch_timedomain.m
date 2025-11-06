@@ -36,13 +36,15 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
     % Structure of saved variables:
     %   allsubj_PC.PAC/PVC.(beat_type) - Cell array of individual PC subjects
     %   allsubj_PC.PAC/PVC.grand_average.(beat_type) - Grand average across PC subjects
-    %   allsubj_control.control.(beat_type) - Cell array of individual control subjects
-    %   allsubj_control.control.grand_average.(beat_type) - Grand average across control subjects
+    %   allsubj_control.PAC/PVC.(beat_type) - Cell array of individual control subjects (separated by S/V prefix)
+    %   allsubj_control.PAC/PVC.grand_average.(beat_type) - Grand average across control subjects
+    %   allsubj_control.PC - Combined PAC+PVC control subjects for overall comparisons
     %
     % Beat type mapping:
     %   For PC subjects: PAC-4, PAC-3, PAC-2, PAC-1, iPAC, PAC+1, PAC+2, PAC+3, PAC+4
     %                   PVC-4, PVC-3, PVC-2, PVC-1, iPVC, PVC+1, PVC+2, PVC+3
     %   For control subjects: iN (isolated normal beats)
+    %                        Control subjects are also separated into PAC (S-prefix) and PVC (V-prefix) groups
     %
     % Author: Pia Reinfeld
 
@@ -84,9 +86,10 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
 
         condition_groups = {'PAC', 'PVC'}; % Groups for PAC and PVC beats
     elseif strcmp(subject_type, 'control')
-        % For control subjects, only use iN
+        % For control subjects, only use iN beat, but separate into PAC and PVC groups
+        % based on subject ID (S = PAC, V = PVC)
         beat_conditions = {'iN'};
-        condition_groups = {'control'};
+        condition_groups = {'PAC', 'PVC'}; % Control subjects also separated by PAC/PVC
     else
         error('subject_type must be either "PC" or "control"');
     end
@@ -106,6 +109,8 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
             end
 
         else % control
+            % Control subjects also separated into PAC and PVC groups
+            % Only iN beat type for both groups
             relevant_beat_types = beat_conditions; % just {'iN'}
         end
 
@@ -220,7 +225,16 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
                 end
 
             else % control
-                current_group = 'control';
+                % Control subjects also separated by PAC/PVC based on subject ID
+                switch subjid(1)
+                    case 'S'
+                        current_group = 'PAC';
+                    case 'V'
+                        current_group = 'PVC';
+                    otherwise
+                        error('Unknown subject prefix "%s" for control subject %s. Expected "S" (PAC) or "V" (PVC).', subjid(1), subjid);
+                end
+
                 relevant_beats = {'iN'};
             end
 
@@ -446,33 +460,31 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
 
     end
 
-    % After processing all PAC/PVC subjects: Combine fields for PC group
-    if strcmp(subject_type, 'PC')
-        % Collect all unique beat type fields from PAC and PVC
-        pac_fields = fieldnames(allsubj.PAC);
-        pvc_fields = fieldnames(allsubj.PVC);
-        all_fields = unique([pac_fields; pvc_fields]);
-        allsubj.PC = struct();
+    % After processing all subjects: Combine PAC and PVC fields into PC group
+    % This applies to both PC and control subjects
+    % Collect all unique beat type fields from PAC and PVC
+    pac_fields = fieldnames(allsubj.PAC);
+    pvc_fields = fieldnames(allsubj.PVC);
+    all_fields = unique([pac_fields; pvc_fields]);
+    allsubj.PC = struct();
 
-        for f = 1:length(all_fields)
-            field_name = all_fields{f};
-            pac_data = {};
-            pvc_data = {};
+    for f = 1:length(all_fields)
+        field_name = all_fields{f};
+        pac_data = {};
+        pvc_data = {};
 
-            if isfield(allsubj.PAC, field_name)
-                pac_data = allsubj.PAC.(field_name);
-            end
-
-            if isfield(allsubj.PVC, field_name)
-                pvc_data = allsubj.PVC.(field_name);
-            end
-
-            % Remove empty cells
-            pac_data = pac_data(~cellfun('isempty', pac_data));
-            pvc_data = pvc_data(~cellfun('isempty', pvc_data));
-            allsubj.PC.(field_name) = [pac_data, pvc_data];
+        if isfield(allsubj.PAC, field_name)
+            pac_data = allsubj.PAC.(field_name);
         end
 
+        if isfield(allsubj.PVC, field_name)
+            pvc_data = allsubj.PVC.(field_name);
+        end
+
+        % Remove empty cells
+        pac_data = pac_data(~cellfun('isempty', pac_data));
+        pvc_data = pvc_data(~cellfun('isempty', pvc_data));
+        allsubj.PC.(field_name) = [pac_data, pvc_data];
     end
 
     %% Save results

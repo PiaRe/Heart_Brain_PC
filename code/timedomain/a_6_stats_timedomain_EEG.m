@@ -11,6 +11,7 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
     %   stats_config       - Statistics configuration structure (config.stats)
     %   input_filename     - Name of the input file to load
     %   epochs_path_control - Optional: Path to control group data for group comparison
+    %                         Note: Control data is separated by PAC/PVC groups (S/V prefix)
     %
     % Outputs:
     %   is_significant     - Boolean indicating whether significant clusters were found
@@ -18,6 +19,8 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
     %
     % The function loads epoched data, performs statistical comparisons based
     % on the configured parameters, and saves results.
+    % For control group comparisons, the matching group is selected automatically
+    % (PAC control vs PAC PC, PVC control vs PVC PC).
     %
     % Author: Pia Reinfeld
 
@@ -101,9 +104,13 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
 
         elseif is_control_analysis
             % Group comparison: PC/PAC/PVC iN beats vs Control group iN beats
+            % Control group data is also separated into PAC and PVC groups based on subject ID
             group_data = allsubj_PC.(group_select);
             comparison_data = group_data.(beat_comparison_field);
-            reference_data = allsubj_control.control.(beat_reference_field);
+
+            % Select matching control group (PAC control vs PAC PC, PVC control vs PVC PC)
+            control_group_data = allsubj_control.(group_select);
+            reference_data = control_group_data.(beat_reference_field);
             beat_type = group_select;
 
         else
@@ -305,7 +312,7 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
         cfg.clusterstatistic = stat_params.clusterstatistic;
         cfg.minnbchan = stat_params.minnbchan;
         cfg.tail = stat_params.tail;
-        cfg.correcttail = stat_params.correcttail; 
+        cfg.correcttail = stat_params.correcttail;
         cfg.clustertail = stat_params.clustertail;
         cfg.alpha = stat_params.alpha;
         cfg.numrandomization = stat_params.numrandomization;
@@ -383,19 +390,23 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
 
         %% Determine if significant clusters were found
         is_significant = false;
-        
+
         if isfield(stat, 'posclusters') && ~isempty(stat.posclusters)
             sig_pos = find([stat.posclusters.prob] < stat_params.alpha);
+
             if ~isempty(sig_pos)
                 is_significant = true;
             end
+
         end
-        
+
         if isfield(stat, 'negclusters') && ~isempty(stat.negclusters)
             sig_neg = find([stat.negclusters.prob] < stat_params.alpha);
+
             if ~isempty(sig_neg)
                 is_significant = true;
             end
+
         end
 
         %% Display results summary
@@ -527,7 +538,7 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
     catch ME
         % Initialize output variable in error case
         is_significant = false;
-        
+
         error_msg = sprintf('Error in a_6_stats_timedomain_EEG: %s\n%s', ME.message, getReport(ME));
         fprintf('%s\n', error_msg); % Log error
         error_file = fullfile(error_log_path, sprintf('stats_timedomain_error_%s.txt', char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'))));
