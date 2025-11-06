@@ -55,6 +55,14 @@ function plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, comp
         return;
     end
 
+    % Check if this is ECG data (single channel named 'ECG')
+    is_ecg = false;
+
+    if length(comparison_data_ga.label) == 1 && strcmp(comparison_data_ga.label{1}, 'ECG')
+        is_ecg = true;
+        fprintf('Detected ECG data - will invert Y-axis (negative up, positive down)\n');
+    end
+
     % Average across cluster channels
     avg_comparison = mean(comparison_data_ga.avg(ch_idx, :), 1);
     avg_reference = mean(reference_data_ga.avg(ch_idx, :), 1);
@@ -114,6 +122,12 @@ function plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, comp
     % Send patches to back
     set(gca, 'children', flipud(get(gca, 'children')));
     set(gca, 'Layer', 'top');
+
+    % Invert Y-axis for ECG plots (negative up, positive down)
+    if is_ecg
+        set(gca, 'YDir', 'reverse');
+        fprintf('Y-axis inverted for ECG plot\n');
+    end
 
     axis tight;
     leg = legend([h1, h2], {['HEP_{', comparison_label, '}'], ['HEP_{', reference_label, '}']}, ...
