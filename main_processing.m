@@ -17,13 +17,13 @@
 %   STEP 8: Source Space Analysis
 %     - Source reconstruction and statistical analysis
 %
-%   STEP 9: Control Analysis - Correlation Analysis (CFA)
+%   STEP 9-10: Control Analysis - Correlation Analysis (CFA)
 %     - Controlling for cardiac field artifacts through correlation analysis
 %
-%   STEP 10: Control Analysis - T-Wave Amplitude
+%   STEP 11: Control Analysis - T-Wave Amplitude
 %     - Control analysis for T-wave amplitude effects
 %
-%   STEP 11: Control Group - Complete Preprocessing and Statistics
+%   STEP 12: Control Group - Complete Preprocessing and Statistics
 %     - Full preprocessing pipeline for control subjects (steps 1-2c, 3-5)
 %     - Step 2c: R-peak detection from EOG_EKG channel (no external ECG files)
 %     - PC vs Control group comparisons (EEG and ECG)
