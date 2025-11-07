@@ -1,3 +1,7 @@
+# Project-specific files
+/copy_subject_files.m
+copy_subject_files.m
+
 # Project-specific directories
 data/
 **/data/
