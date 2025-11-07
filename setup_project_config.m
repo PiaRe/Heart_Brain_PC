@@ -25,6 +25,7 @@ function config = setup_project_config()
     config.paths.crop_marker_path = [config.paths.base_data, 'raw/crop_marker/'];
     config.paths.event_data = [config.paths.base_data, 'raw/event_marker/'];
     config.paths.no_ica_pc_path = [config.paths.base_data, 'ICA/no/PC/'];
+    config.paths.no_ica_control_path = [config.paths.base_data, 'ICA/no/control/'];
     config.paths.pre_ica_pc_path = [config.paths.base_data, 'ICA/pre/PC/'];
     config.paths.pre_ica_control_path = [config.paths.base_data, 'ICA/pre/control/'];
     config.paths.post_ica_pc_path = [config.paths.base_data, 'ICA/post/PC/'];
@@ -289,7 +290,7 @@ function config = setup_project_config()
     config.cfa.base.statistical_analysis.parameter = 'fisher_transf';
     config.cfa.base.statistical_analysis.statistic = 'ft_statfun_depsamplesT';
     config.cfa.base.statistical_analysis.channel = {'all', '-ECG'};
-    config.cfa.base.statistical_analysis.minnbchan = 100;
+    config.cfa.base.statistical_analysis.minnbchan = 2;
 
     % Configuration 1: Delta HEP and delta ECG cluster-based correlation analysis (PC: +1 vs -3)
     config.cfa.cluster_pc_p1_vs_m3 = config.cfa.base;
@@ -325,7 +326,7 @@ function config = setup_project_config()
     config.twave.settings.beat_reference = '-3'; % PC-3 (will also use iN)
     config.twave.settings.group_select = 'PC'; % Both PAC and PVC combined
     config.twave.settings.t_wave_window = [0.2, 0.4]; % 200-400ms after R-peak
-    config.twave.settings.cost_unmatched = 50; % Starting cost for unmatched epochs
+    config.twave.settings.cost_unmatched = 100; % Starting cost for unmatched epochs
     config.twave.settings.cost_decrement = 5; % Amount to decrease cost per iteration for stricter matching
     config.twave.settings.min_cost = 5; % Minimum cost threshold to prevent over-matching and too little remaining trials
     config.twave.settings.input_filename = config.hep.output_filename_pc;
@@ -333,7 +334,7 @@ function config = setup_project_config()
 
     % Store both EEG and ECG specific twave configs for the two statistical analyses
     config.twave.settings.stats_config_eeg = config.stats.eeg.twave; % For EEG analysis
-    config.twave.settings.stats_config_eeg.statistical_analysis.latency = [0.13, 0.2];
+    % config.twave.settings.stats_config_eeg.statistical_analysis.latency = [0.13, 0.2];
     config.twave.settings.stats_config_ecg = config.stats.ecg.twave; % For ECG analysis
     config.twave.settings.stats_config_ecg.statistical_analysis.latency = [0.13, 0.2];
 

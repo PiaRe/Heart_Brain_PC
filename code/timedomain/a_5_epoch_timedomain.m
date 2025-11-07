@@ -1,11 +1,11 @@
-function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_filename)
+function a_5_epoch_timedomain(input_data_path, epoched_path, epoch_config, output_filename)
     % A_5_EPOCH_TIMEDOMAIN - Epoch the data for time domain HEP analysis
     %
     % This function performs epoching for Heartbeat Evoked Potentials (HEP) analysis.
     % It processes both premature contractions (PC) and control subjects with normal beats.
     %
     % Key steps:
-    %   1. Loads ICA-cleaned EEG data with reintegrated ECG channel
+    %   1. Loads preprocessed EEG data (with or without ICA) with reintegrated ECG channel
     %   2. Creates epochs around different heartbeat types (PAC, PVC, normal beats)
     %   3. Removes epochs marked as bad ECG artifacts
     %   4. Applies baseline correction with different options
@@ -16,7 +16,7 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
     %   9. Saves epoched data and analysis results
     %
     % Inputs:
-    %   post_ica_path      - Path to data after ICA processing with reintegrated ECG (string)
+    %   input_data_path    - Path to preprocessed data (with or without ICA) with reintegrated ECG (string)
     %   epoched_path       - Path for saving epoched data (string)
     %   epoch_config       - Structure containing epoching configuration:
     %       .error_log_path       - Path for saving error logs
@@ -61,10 +61,10 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
 
     fprintf('Starting epoching for time domain HEP analysis for %s subjects...\n', subject_type);
 
-    files = find_files_by_extension(post_ica_path, '*.set');
+    files = find_files_by_extension(input_data_path, '*.set');
 
     if isempty(files)
-        error('No .set files found in %s', post_ica_path);
+        error('No .set files found in %s', input_data_path);
     end
 
     % Initialize results structure
@@ -157,7 +157,7 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
 
             try
                 % Load EEG data
-                EEG = pop_loadset('filename', filename, 'filepath', post_ica_path);
+                EEG = pop_loadset('filename', filename, 'filepath', input_data_path);
                 EEG = eeg_checkset(EEG);
 
                 % Create epochs for reference condition
@@ -207,7 +207,7 @@ function a_5_epoch_timedomain(post_ica_path, epoched_path, epoch_config, output_
 
         try
             % Load EEG data
-            EEG = pop_loadset('filename', filename, 'filepath', post_ica_path);
+            EEG = pop_loadset('filename', filename, 'filepath', input_data_path);
             EEG = eeg_checkset(EEG);
 
             % Determine condition from filename

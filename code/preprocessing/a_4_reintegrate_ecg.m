@@ -1,7 +1,7 @@
-function a_4_reintegrate_ecg(post_ica_path, error_log_path)
+function a_4_reintegrate_ecg(input_data_path, error_log_path)
     % A_4_REINTEGRATE_ECG - Reintegrate ECG channel into EEG data structure
     %
-    % This function takes ICA-cleaned EEG data and reintegrates the ECG channel
+    % This function takes preprocessed EEG data (with or without ICA) and reintegrates the ECG channel
     % that was previously stored separately in EEG.ECG.data back into the main
     % EEG.data matrix as a regular channel. This is necessary for subsequent
     % statistical analyses that need access to the ECG channel.
@@ -9,11 +9,11 @@ function a_4_reintegrate_ecg(post_ica_path, error_log_path)
     % The files are overwritten in place (no separate output directory).
     %
     % Inputs:
-    %   post_ica_path   - Path to ICA-cleaned .set files (input and output)
+    %   input_data_path - Path to preprocessed .set files (input and output)
     %   error_log_path  - Path for error logging
     %
     % Outputs:
-    %   - EEG datasets with ECG channel reintegrated (.set files) overwritten in post_ica_path
+    %   - EEG datasets with ECG channel reintegrated (.set files) overwritten in input_data_path
     %   - Error logs in error_log_path (if errors occur)
     %
     % The ECG channel will be added as the last channel in EEG.data with
@@ -27,10 +27,10 @@ function a_4_reintegrate_ecg(post_ica_path, error_log_path)
     fprintf('Starting ECG reintegration...\n');
 
     %% Get file names
-    files = find_files_by_extension(post_ica_path, '*.set');
+    files = find_files_by_extension(input_data_path, '*.set');
 
     if isempty(files)
-        error('No .set files found in %s', post_ica_path);
+        error('No .set files found in %s', input_data_path);
     end
 
     %% Loop over subjects
@@ -42,8 +42,8 @@ function a_4_reintegrate_ecg(post_ica_path, error_log_path)
             subjid = extract_subject_id(files(i).name);
             fprintf('Processing subject: %s\n', subjid);
 
-            % Load ICA-cleaned data
-            EEG = pop_loadset('filename', files(i).name, 'filepath', post_ica_path);
+            % Load preprocessed data
+            EEG = pop_loadset('filename', files(i).name, 'filepath', input_data_path);
             EEG = eeg_checkset(EEG);
 
             % CRITICAL: Check if ECG data exists - MUST be present
@@ -91,7 +91,7 @@ function a_4_reintegrate_ecg(post_ica_path, error_log_path)
             fprintf('  Total channels: %d\n', EEG.nbchan);
 
             % Save dataset with reintegrated ECG (overwrite in place)
-            pop_saveset(EEG, 'filename', [subjid, '.set'], 'filepath', post_ica_path);
+            pop_saveset(EEG, 'filename', [subjid, '.set'], 'filepath', input_data_path);
             fprintf('  Saved (overwritten): %s\n', subjid);
 
             % Delete old error logs if they exist

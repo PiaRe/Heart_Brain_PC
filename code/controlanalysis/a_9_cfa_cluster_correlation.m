@@ -112,6 +112,8 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
                     % Empirical correlation
                     r_empirical = corr(delta_hep_ecg_subj.trial(:, elec, time), ...
                         delta_hep_ecg_subj.trial(:, ecg_channel_idx, time), 'Type', corr_type);
+                    % Clip r to avoid Inf values from atanh (when r = ±1)
+                    r_empirical = max(min(r_empirical, 0.9999), -0.9999);
                     fisher_z_emp_subj(elec, time) = atanh(r_empirical);
 
                     % Chance level correlation (time-permuted)
@@ -121,6 +123,8 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
                         r_chance = corr(delta_hep_ecg_subj.trial(:, elec, time), ...
                             delta_hep_ecg_subj.trial(:, ecg_channel_idx, random_time_permutations(i_perm, time)), ...
                             'Type', corr_type);
+                        % Clip r to avoid Inf values from atanh (when r = ±1)
+                        r_chance = max(min(r_chance, 0.9999), -0.9999);
                         fisher_z_perm(i_perm) = atanh(r_chance);
                     end
 
