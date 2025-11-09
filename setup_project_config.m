@@ -91,8 +91,8 @@ function config = setup_project_config()
     %% HEP analysis parameters
     config.hep.epoch_length = [-200, 800]; % in ms
     config.hep.baseline_time = [-150, -50]; % in ms
-    config.hep.baseline_option = 'int'; % 'no', 'ref', 'int'
-    config.hep.ica_status = 'no'; % 'no', 'post' (choose ICA correction level)
+    config.hep.baseline_option = 'ref'; % 'no', 'ref', 'int'
+    config.hep.ica_status = 'post'; % 'no', 'post' (choose ICA correction level)
 
     %% Dynamic output filename helper and generated filenames
     config.hep.get_output_filename = @(subject_type, baseline_option, ica_status) sprintf('allsubj_timedomain_%s_%s_%s.mat', subject_type, baseline_option, ica_status);

@@ -400,17 +400,36 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
             downsample_suffix = '_downsampled';
         end
 
+        % Extract ICA status and baseline option from config for filename
+        ica_suffix = '';
+        baseline_suffix = '';
+
+        if isfield(stat_params, 'hep_params')
+            hep = stat_params.hep_params;
+
+            % Add ICA status to filename
+            if isfield(hep, 'ica_status')
+                ica_suffix = sprintf('_%s', hep.ica_status);
+            end
+
+            % Add baseline option to filename
+            if isfield(hep, 'baseline_option')
+                baseline_suffix = sprintf('_%s', hep.baseline_option);
+            end
+
+        end
+
         if is_tpeak_matched
-            output_filename = sprintf('timedomain_EEG_tpeak_matched_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
+            output_filename = sprintf('timedomain_EEG_tpeak_matched_%s_%s_vs_%s%s%s%s.mat', beat_type, beat_comparison, beat_reference, ica_suffix, baseline_suffix, downsample_suffix);
             comparison_desc = sprintf('T-peak matched: %s vs %s', beat_comparison, beat_reference);
         elseif is_pac_pvc_comparison
-            output_filename = sprintf('timedomain_EEG_PACvsPVC_%s%s.mat', beat_comparison, downsample_suffix);
+            output_filename = sprintf('timedomain_EEG_PACvsPVC_%s%s%s%s.mat', beat_comparison, ica_suffix, baseline_suffix, downsample_suffix);
             comparison_desc = sprintf('PAC vs PVC (%s beats)', beat_comparison);
         elseif is_control_analysis
-            output_filename = sprintf('timedomain_EEG_PCvsControl_%s_%s%s.mat', beat_type, beat_comparison, downsample_suffix);
+            output_filename = sprintf('timedomain_EEG_PCvsControl_%s_%s%s%s%s.mat', beat_type, beat_comparison, ica_suffix, baseline_suffix, downsample_suffix);
             comparison_desc = sprintf('PC vs Control (%s beats)', beat_comparison);
         else
-            output_filename = sprintf('timedomain_EEG_within_%s_%s_vs_%s%s.mat', beat_type, beat_comparison, beat_reference, downsample_suffix);
+            output_filename = sprintf('timedomain_EEG_within_%s_%s_vs_%s%s%s%s.mat', beat_type, beat_comparison, beat_reference, ica_suffix, baseline_suffix, downsample_suffix);
             comparison_desc = sprintf('%s vs %s', beat_comparison, beat_reference);
         end
 
