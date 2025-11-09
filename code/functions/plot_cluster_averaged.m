@@ -127,10 +127,14 @@ function plot_cluster_averaged(stat, comparison_data_ga, reference_data_ga, comp
     if is_ecg
         set(gca, 'YDir', 'reverse');
         fprintf('Y-axis inverted for ECG plot\n');
+        label_prefix = 'ECG';
+    else
+        label_prefix = 'HEP';
     end
 
     axis tight;
-    leg = legend([h1, h2], {['HEP_{', comparison_label, '}'], ['HEP_{', reference_label, '}']}, ...
+
+    leg = legend([h1, h2], {[label_prefix, '_{', comparison_label, '}'], [label_prefix, '_{', reference_label, '}']}, ...
         'Location', 'Best', 'FontSize', 14);
     legend('boxoff');
     leg.ItemTokenSize = [20, 20];

@@ -91,8 +91,8 @@ function config = setup_project_config()
     %% HEP analysis parameters
     config.hep.epoch_length = [-200, 800]; % in ms
     config.hep.baseline_time = [-150, -50]; % in ms
-    config.hep.baseline_option = 'ref'; % 'no', 'ref', 'int'
-    config.hep.ica_status = 'post'; % 'no', 'post' (choose ICA correction level)
+    config.hep.baseline_option = 'int'; % 'no', 'ref', 'int'
+    config.hep.ica_status = 'no'; % 'no', 'post' (choose ICA correction level)
 
     %% Dynamic output filename helper and generated filenames
     config.hep.get_output_filename = @(subject_type, baseline_option, ica_status) sprintf('allsubj_timedomain_%s_%s_%s.mat', subject_type, baseline_option, ica_status);
@@ -326,7 +326,7 @@ function config = setup_project_config()
     config.twave.settings.beat_reference = '-3'; % PC-3 (will also use iN)
     config.twave.settings.group_select = 'PC'; % Both PAC and PVC combined
     config.twave.settings.t_wave_window = [0.2, 0.4]; % 200-400ms after R-peak
-    config.twave.settings.cost_unmatched = 100; % Starting cost for unmatched epochs
+    config.twave.settings.cost_unmatched = 200; % Starting cost for unmatched epochs
     config.twave.settings.cost_decrement = 5; % Amount to decrease cost per iteration for stricter matching
     config.twave.settings.min_cost = 5; % Minimum cost threshold to prevent over-matching and too little remaining trials
     config.twave.settings.input_filename = config.hep.output_filename_pc;
