@@ -47,7 +47,6 @@ Heart_Brain_PC/
 - All MATLAB analysis scripts (`.m` files)
 - Python matching notebook (`.ipynb`)
 - Precomputed templates and configurations
-- Documentation and README files
 
 **Excluded from repository** (see `.gitignore`):
 - Raw EEG/ECG data files (`.set`, `.fdt`, `.vhdr`, `.vmrk`, `.eeg`)
@@ -68,7 +67,7 @@ The analysis is organized in sequential steps. All steps are controlled through 
 Match healthy control subjects to PC subjects based on:
 - Age, BMI, blood pressure (when available)
 - Sex (exact matching)
-- ECG quality (sinus rhythm, no pathologies)
+- controlling ECG quality (sinus rhythm, no pathologies)
 
 **Method:** k-Nearest Neighbors with standardized features
 
@@ -83,13 +82,13 @@ Match healthy control subjects to PC subjects based on:
 - Apply bandpass filters:
   - EEG: 0.5-20 Hz (analysis) or 1-20 Hz (ICA)
   - ECG: 0.5-45 Hz (preserves R-peak morphology)
-- Remove line noise (50 Hz)
+- Remove line noise (50 Hz) and mark noisy segments
 - Detect and interpolate flat channels
 - Add channel locations
 
 #### Step 2: Import/Detect R-peaks
 **Scripts:** 
-- `code/preprocessing/a_2a_import_rpeaks_PC.m` (PC group - external ECG files)
+- `code/preprocessing/a_2a_import_rpeaks_PC.m` (PC group - external ECG files detected with CER-S)
 - `code/preprocessing/a_2b_detect_rpeaks_control.m` (Control group - internal detection)
 
 Import externally detected R-peak events and beat type labels:
@@ -97,13 +96,14 @@ Import externally detected R-peak events and beat type labels:
 - `S` = Supraventricular (PAC)
 - `V` = Ventricular (PVC)
 - Beat positions relative to PC: `-4, -3, -2, -1, iPAC/iPVC, +1, +2, +3, +4`
+- mark labels in noisy segments as `badECG`
 
 #### Step 3: ICA Cleaning
 **Script:** `code/preprocessing/a_3_run_ICA.m`
 
-- Run extended Infomax ICA
+- Run extended Infomax ICA on epoched data
 - Automatically identify and remove artifact components:
-  - ECG artifacts (correlation with ECG channel)
+  - ECG artifacts (correlation with ECG template)
   - Eye movement artifacts
   - Muscle artifacts
   - Line noise
@@ -112,14 +112,14 @@ Import externally detected R-peak events and beat type labels:
 #### Step 4: Reintegrate ECG Channel
 **Script:** `code/preprocessing/a_4_reintegrate_ecg.m`
 
-Reintegrate the ECG channel into the ICA-cleaned EEG data for HEP analysis.
+Reintegrate the ECG channel into the EEG data.
 
 #### Step 5: Epoch Data
 **Script:** `code/timedomain/a_5_epoch_timedomain.m`
 
 - Epoch EEG data around R-peaks: -200 to +800 ms
-- Apply baseline correction: -150 to -50 ms
-- Reject epochs with artifacts
+- Subtract averaged iN from every PC-1 beat in continuous data for a clean PC beat
+- Apply baseline correction: -150 to -50 ms before reference condition
 - Average within beat types
 - Save epoched data for statistical analysis
 
@@ -134,6 +134,7 @@ Cluster-based permutation tests (FieldTrip) for:
 - **Within-group comparisons:** e.g., PC+1 vs PC-3, PC vs Normal (iN)
 - **Between-group comparisons:** PAC vs PVC
 - **Control group comparisons:** PC vs Control (Normal beats)
+- **T-wave matched comparisons:** PC+1 vs matched T-wave PC-3
 
 #### Step 7: ECG Statistics
 **Script:** `code/timedomain/a_7_stats_timedomain_ECG.m`
@@ -146,18 +147,18 @@ Same statistical framework as Step 6, but for ECG channel to verify cardiac chan
 **Script:** `code/sourcespace/a_8_source_analysis.m`
 
 - Forward model: eLORETA with regularization (0.5, 0.05, 0.001)
-- Aggregate voxels into Harvard-Oxford cortical ROIs
+- Aggregate voxels into Harvard-Oxford cortical ROIs (AVG, AVG-SF)
 - Statistical comparison between beat types
 - Visualization on cortical surface
 
 **Key contrasts:**
-- PVC: PC itself (0) vs PC-3 (time window: 220-350 ms)
+- PVC: PVC vs PVC-3 (time window: 220-350 ms)
 - PAC+PVC: PC+1 vs PC-3 (time window: 130-200 ms)
 
 #### Step 9: Time-Resolved Source Analysis
 **Script:** `code/sourcespace/a_9_source_analysis_timewise.m`
 
-Sliding time window analysis to track source activity evolution after PC.
+Sliding time window analysis to compare PC+1 with PC-3.
 
 ### Steps 10-11: Control Analyses
 
@@ -167,8 +168,8 @@ Sliding time window analysis to track source activity evolution after PC.
 - `code/controlanalysis/a_10_cfa_timewindow_correlation.m` (time-window averaged)
 
 Control for potential cardiac field artifacts by correlating:
-- Δ HEP with ΔECG
-- HEP amplitude with ECG amplitude
+- ΔHEP with ΔECG
+- highest HEP amplitude with highest ECG amplitude
 
 **Method:** Spearman correlation with permutation testing
 
@@ -192,6 +193,7 @@ Match PC+1 epochs with Normal/PC-3 epochs based on T-wave amplitude to control f
 - **[Inpaint_Nans](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans)** (Interpolation)
 - **[Brewermap](https://github.com/DrosteEffect/BrewerMap)** (Colormaps)
 - **[Tensor Toolbox](https://www.tensortoolbox.org/)** (tested with v3.6)
+- **[METH Toolbox](https://github.com/guidonolte/METH)** (Source Reconstruction/eLORETA)
 
 #### Python (3.7 or higher)
 - `pandas`
@@ -210,10 +212,9 @@ pip install pandas numpy scikit-learn seaborn matplotlib jupyter
 
 **Not included in repository** - must be obtained from original study:
 - Raw EEG data in BrainVision format (`.vhdr`, `.vmrk`, `.eeg`)
-- ECG event files with R-peak annotations
+- ECG event files with R-peak annotations for PC and regular beats
 - Subject demographic data (for matching)
 - Crop marker files (optional, for removing segments)
-
 
 ## Getting Started
 
@@ -227,7 +228,7 @@ config.paths.base = '/path/to/Heart_Brain_PC/';
 
 % External toolbox paths
 config.paths.eeglab = '/path/to/eeglab2021.1/';
-config.paths.heplab = '/path/to/HEPLAB/Functions/';
+config.paths.heplab = '/path/to/HEPLAB/';
 config.paths.fieldtrip = '/path/to/fieldtrip-20220422/';
 % ... etc
 ```
@@ -246,8 +247,6 @@ data/
 └── matching/            # CSV files for subject matching
 ```
 
-Or use `copy_subject_files.m` to automatically copy files from source directories.
-
 ### 3. Run Subject Matching (Optional)
 
 If creating a control group:
@@ -259,17 +258,15 @@ jupyter notebook matching_PC2control.ipynb
 
 Open MATLAB and run:
 ```matlab
-% Open main script
-edit main_processing.m
+% Open main script main_processing.m
 
-% Uncomment desired analysis steps (lines are commented by default)
-% For example, uncomment steps 1-7 for full preprocessing and time-domain analysis
+% Run desired analysis steps
+% For example, run steps 1-7 for full preprocessing and time-domain analysis
 
 % Run the script
-main_processing
 ```
 
-**Analysis steps can be run independently** - just uncomment the relevant sections in `main_processing.m`.
+**Analysis steps can be run independently** - just comment/uncomment the relevant sections in `main_processing.m`.
 
 ### 5. Check Outputs
 
@@ -297,8 +294,8 @@ The pipeline tracks beat positions relative to premature contractions:
 ## Output Files
 
 ### Time-Domain Results
-- `allsubj_timedomain_PC_ref_post.mat` - PC group epoched data
-- `allsubj_timedomain_control_ref_post.mat` - Control group epoched data
+- e.g. `allsubj_timedomain_PC_ref_post.mat` - PC group epoched data
+- e.g. `allsubj_timedomain_control_ref_post.mat` - Control group epoched data
 
 ### Statistical Results (in `results/`)
 - EEG and ECG cluster statistics (FieldTrip structures)
