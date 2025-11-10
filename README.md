@@ -141,9 +141,9 @@ Cluster-based permutation tests (FieldTrip) for:
 
 Same statistical framework as Step 6, but for ECG channel to verify cardiac changes.
 
-### Steps 8-9: Source Space Analysis
+### Steps 8: Source Space Analysis
 
-#### Step 8: Source Reconstruction (eLORETA)
+#### Step 8a-b: Source Reconstruction (eLORETA)
 **Script:** `code/sourcespace/a_8_source_analysis.m`
 
 - Forward model: eLORETA with regularization (0.5, 0.05, 0.001)
@@ -155,14 +155,14 @@ Same statistical framework as Step 6, but for ECG channel to verify cardiac chan
 - PVC: PVC vs PVC-3 (time window: 220-350 ms)
 - PAC+PVC: PC+1 vs PC-3 (time window: 130-200 ms)
 
-#### Step 9: Time-Resolved Source Analysis
+#### Step 8c: Time-Resolved Source Analysis
 **Script:** `code/sourcespace/a_9_source_analysis_timewise.m`
 
 Sliding time window analysis to compare PC+1 with PC-3.
 
-### Steps 10-11: Control Analyses
+### Steps 9-11: Control Analyses
 
-#### Step 10: Cardiac Field Artifact (CFA) Correlation
+#### Step 9-10: Cardiac Field Artifact (CFA) Correlation
 **Scripts:** 
 - `code/controlanalysis/a_9_cfa_cluster_correlation.m` (cluster-based)
 - `code/controlanalysis/a_10_cfa_timewindow_correlation.m` (time-window averaged)
@@ -177,6 +177,11 @@ Control for potential cardiac field artifacts by correlating:
 **Script:** `code/controlanalysis/a_11_twave_control.m`
 
 Match PC+1 epochs with Normal/PC-3 epochs based on T-wave amplitude to control for T-wave morphology effects on HEP.
+
+#### Step 12: Control Group Analysis
+**Script:** `a_1, 1_2b, a_3, a_4, a_5, a_6, a_7`
+
+Preprocess control group data and compare iN beats of PC and control group. 
 
 ---
 
