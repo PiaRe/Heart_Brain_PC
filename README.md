@@ -178,7 +178,7 @@ Control for potential cardiac field artifacts by correlating:
 
 Match PC+1 epochs with Normal/PC-3 epochs based on T-wave amplitude to control for T-wave morphology effects on HEP.
 
-#### Step 12: Control Group Analysis
+### Step 12: Control Group Analysis
 **Script:** `a_1, 1_2b, a_3, a_4, a_5, a_6, a_7`
 
 Preprocess control group data and compare iN beats of PC and control group. 
