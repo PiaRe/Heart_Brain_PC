@@ -4,18 +4,20 @@ function config = setup_project_config()
     % This function creates a unified configuration structure for the entire
     % Heart-Brain premature contractions analysis pipeline.
     %
+    % NOTE: This is the public template version with placeholder paths.
+    % To use this project, adapt the placeholder paths with your actual paths.
+    %
     % Returns:
     %   config - Structure containing all configurations
     %
     % Author: Pia Reinfeld
 
-    fprintf('Setting up project configuration...\n');
-
-    %% Initialize configuration structure
+    %% Initialize configuration structure with placeholders
+    fprintf('Setting up project configuration with placeholder paths...\n');
     config = struct();
 
-    %% Base paths
-    config.paths.base = '/data/pt_02778/HEP_ES/Heart_Brain_PC/';
+    %% Base paths - REPLACE THESE IN YOUR LOCAL CONFIG FILE
+    config.paths.base = '/path/to/your/Heart_Brain_PC/';
     config.paths.base_code = [config.paths.base 'code/'];
     config.paths.base_data = [config.paths.base, 'data/'];
 
@@ -37,15 +39,15 @@ function config = setup_project_config()
     config.paths.error_log_path = [config.paths.base_code, 'logfiles/'];
     config.paths.precomputed_path = [config.paths.base, 'precomputed/'];
 
-    %% External toolbox paths
-    config.paths.eeglab = '/data/pt_02584/Patty/Toolboxes/eeglab2021.1/';
-    config.paths.heplab = '/HEPLAB-master/HEPLAB-master/Functions';
-    config.paths.fieldtrip = '/data/pt_02584/Patty/Toolboxes/fieldtrip-20220422/';
-    config.paths.boundedline = '/data/p_02035/Matlab_codes/toolboxes/boundedline-pkg-master/boundedline/';
-    config.paths.inpaintnan = '/data/p_02035/Matlab_codes/toolboxes/Inpaint_Nans-master/';
-    config.paths.tensor = '/data/p_02035/Matlab_codes/toolboxes/tensor_toolbox-v3.6/';
-    config.paths.brewermap = '/data/p_02035/Matlab_codes/toolboxes/BrewerMap-master/';
-    config.paths.meth = '/data/pt_02584/Patty/premature_beats/scripts/source_modeling/meth/';
+    %% External toolbox paths - REPLACE THESE IN YOUR LOCAL CONFIG FILE
+    config.paths.eeglab = '/path/to/eeglab/';
+    config.paths.heplab = '/path/to/HEPLAB/';
+    config.paths.fieldtrip = '/path/to/fieldtrip/';
+    config.paths.boundedline = '/path/to/boundedline/';
+    config.paths.inpaintnan = '/path/to/Inpaint_Nans/';
+    config.paths.tensor = '/path/to/tensor_toolbox/';
+    config.paths.brewermap = '/path/to/BrewerMap/';
+    config.paths.meth = '/path/to/meth/';
 
     %% Processing parameters
     config.processing.sampling_rate = 500;

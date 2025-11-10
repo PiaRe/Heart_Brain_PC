@@ -1,5 +1,5 @@
 # Project-specific files
-copy_subject_files.m
+*_local.m
 
 # Project-specific directories
 data/
