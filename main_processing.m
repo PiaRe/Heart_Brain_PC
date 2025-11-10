@@ -53,7 +53,7 @@ clc; clear; close all; % Clear command window, variables, and figures.
 
 %% Initialize configuration
 % Load centralized configuration
-config = setup_project_config();
+config = setup_project_config_local();
 
 % Add required paths
 addpath(config.paths.eeglab);
