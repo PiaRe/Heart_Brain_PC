@@ -46,7 +46,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     prepFileList = {prepFiles.name};
 
     %% preprocess data and save as set
-    parfor i = 1:length(files) 
+    parfor i = 1:length(files)
 
         try
 
@@ -54,7 +54,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             subjid = extract_subject_id(files(i).name, '.vhdr');
 
             % if subject is already in prep - folder, skip it
-            if any(strcmp(prepFileList, [subjid(1:12), '.set'])) % TODO: change
+            if any(strcmp(prepFileList, [subjid, '.set']))
                 continue
             end
 
@@ -99,8 +99,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
 
             %% Apply crop markers if available
             % Look for crop marker file
-            subjid_short = subjid(1:min(12, length(subjid)));
-            crop_pattern = [subjid_short, '_Ruhe_Startmarker_S99*'];
+            crop_pattern = [subjid, '_Ruhe_Startmarker_S99*'];
             crop_files = dir(fullfile(crop_marker_path, crop_pattern));
 
             if ~isempty(crop_files)
@@ -135,7 +134,7 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             EEG.rejData = rejData;
 
             % save results
-            pop_saveset(EEG, 'filename', subjid(1:12), 'filepath', preprocessed_data_path); % TODO:change
+            pop_saveset(EEG, 'filename', subjid, 'filepath', preprocessed_data_path);
 
         catch ME
             % in case something goes wrong, save an error log

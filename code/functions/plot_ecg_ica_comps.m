@@ -1,7 +1,6 @@
 %% Plot ECG-ICA Comps
 % works in conjunction with ecg_ica_corr()
 % takes rejV and cV as input + a path where the pictures should be saved
-% todo: fix time scale fro sec to ms
 
 function plot_ecg_ica_comps(EEG, rejV, cV, img_save_path, subjid)
 
