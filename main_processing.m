@@ -5,12 +5,14 @@
 % steps, progressing from preprocessing to statistical analysis and control analyses.
 %
 % Pipeline Structure:
-%   STEPS 1-7: PC Group - Main Analysis
+%   STEPS 1-5: Preprocessing (PC and Control Groups)
 %     1. Initial preprocessing and ICA (filtering, downsampling)
-%     2. Import ECG events (R-peak timepoints)
+%     2. Import ECG events (R-peak timepoints for PC) / Detect R-peaks (for Control)
 %     3. Run ICA and remove artifactual components
 %     4. Reintegrate ECG channel (ICA-corrected and non-ICA data)
 %     5. Epoch data for time domain HEP analysis
+%
+%   STEPS 6-7: PC Group - Within-Group Statistics
 %     6. EEG statistics in time domain (within-group and PAC vs PVC)
 %     7. ECG statistics in time domain (within-group and PAC vs PVC)
 %
@@ -23,10 +25,8 @@
 %   STEP 11: Control Analysis - T-Wave Amplitude
 %     - Control analysis for T-wave amplitude effects
 %
-%   STEP 12: Control Group - Complete Preprocessing and Statistics
-%     - Full preprocessing pipeline for control subjects (steps 1-2c, 3-5)
-%     - Step 2c: R-peak detection from EOG_EKG channel (no external ECG files)
-%     - PC vs Control group comparisons (EEG and ECG)
+%   STEP 12: Between-Group Comparison - PC vs Control
+%     - Statistical comparison between PC and Control groups (EEG and ECG)
 %
 % Requirements:
 %   - EEGLAB toolbox with bva_io, erp_lab plugins
@@ -86,41 +86,60 @@ create_dirs(dirs_to_create);
 % Initialize EEGLAB
 eeglab; close;
 
-%% Step 1: Initial preprocessing
-fprintf('Running step 1a: Initial preprocessing of PC data for ICA');
-a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica); 
+%% Step 1: Initial preprocessing (PC and Control Groups)
+fprintf('Running step 1a: Initial preprocessing of PC data for ICA\n');
+a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica);
 
-fprintf('Running step 1b: Initial preprocessing of PC analysis data');
-a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis); 
+fprintf('Running step 1b: Initial preprocessing of PC analysis data\n');
+a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis);
 
-%% Step 2: Import events (timepoints of R-peaks)
-fprintf('Running step 2a: Importing ECG events and beats for PC ICA data');
+fprintf('Running step 1c: Initial preprocessing of control data for ICA\n');
+a_1_preprocessing(config.paths.raw_control_data, config.paths.pre_ica_control_path, config.prepro.ica);
+
+fprintf('Running step 1d: Initial preprocessing of control analysis data\n');
+a_1_preprocessing(config.paths.raw_control_data, config.paths.no_ica_control_path, config.prepro.analysis);
+
+%% Step 2: Import/Detect ECG events (timepoints of R-peaks)
+fprintf('Running step 2a: Importing ECG events and beats for PC ICA data\n');
 a_2a_import_rpeaks_PC(config.paths.pre_ica_pc_path, config.paths.pre_ica_pc_path, config.import_events);
 
-fprintf('Running step 2b: Importing ECG events and beats for PC analysis data');
+fprintf('Running step 2b: Importing ECG events and beats for PC analysis data\n');
 a_2a_import_rpeaks_PC(config.paths.no_ica_pc_path, config.paths.no_ica_pc_path, config.import_events);
 
-%% Step 3: Run ICA and remove artifactual components
-fprintf('Running step 3: Running ICA and removing components for PC subjects');
+fprintf('Running step 2c: Detecting R-peaks for control ICA data\n');
+a_2b_detect_rpeaks_control(config.paths.pre_ica_control_path, config.paths.pre_ica_control_path, config.rpeak_detection);
+
+fprintf('Running step 2d: Detecting R-peaks for control analysis data (no_ica)\n');
+a_2b_detect_rpeaks_control(config.paths.no_ica_control_path, config.paths.no_ica_control_path, config.rpeak_detection);
+
+%% Step 3: Run ICA and remove artifactual components (PC and Control Groups)
+fprintf('Running step 3a: Running ICA and removing components for PC subjects\n');
 a_3_run_ICA(config.paths.no_ica_pc_path, config.paths.pre_ica_pc_path, config.paths.post_ica_pc_path, config.ica_cleaning);
 
-%% Step 4: Reintegrate ECG channel into EEG data
+fprintf('Running step 3b: Running ICA and removing components for control subjects\n');
+a_3_run_ICA(config.paths.no_ica_control_path, config.paths.pre_ica_control_path, config.paths.post_ica_control_path, config.ica_cleaning);
+
+%% Step 4: Reintegrate ECG channel into EEG data (PC and Control Groups)
 fprintf('Running step 4a: Reintegrate ECG channel for PC subjects (ICA-corrected)\n');
 a_4_reintegrate_ecg(config.paths.post_ica_pc_path, config.paths.error_log_path);
 
 fprintf('Running step 4b: Reintegrate ECG channel for PC subjects (non-ICA)\n');
 a_4_reintegrate_ecg(config.paths.no_ica_pc_path, config.paths.error_log_path);
 
-%% Step 5: Epoch data for time domain HEP analysis
+fprintf('Running step 4c: Reintegrate ECG channel for control subjects (ICA-corrected)\n');
+a_4_reintegrate_ecg(config.paths.post_ica_control_path, config.paths.error_log_path);
+
+%% Step 5: Epoch data for time domain HEP analysis (PC and Control Groups)
 fprintf('Running step 5a: Epoching for HEP analysis for PC subjects (ICA-corrected)\n');
-output_filename_pc_ica = config.hep.get_output_filename('PC', config.hep.baseline_option, 'post'); % this could go to config, you also generate other filenames there
-a_5_epoch_timedomain(config.paths.post_ica_pc_path, config.paths.epochs_pc_path, config.epoching.pc, output_filename_pc_ica);
+a_5_epoch_timedomain(config.paths.post_ica_pc_path, config.paths.epochs_pc_path, config.epoching.pc, config.hep.output_filename_pc_ica);
 
 fprintf('Running step 5b: Epoching for HEP analysis for PC subjects (data not ICA corrected)\n');
-output_filename_pc_no_ica = config.hep.get_output_filename('PC', config.hep.baseline_option, 'no');
-a_5_epoch_timedomain(config.paths.no_ica_pc_path, config.paths.epochs_pc_path, config.epoching.pc, output_filename_pc_no_ica);
+a_5_epoch_timedomain(config.paths.no_ica_pc_path, config.paths.epochs_pc_path, config.epoching.pc, config.hep.output_filename_pc_no_ica);
 
-%% Step 6: Run statistics in time domain for EEG channel
+fprintf('Running step 5c: Epoching for HEP analysis for control subjects\n');
+a_5_epoch_timedomain(config.paths.post_ica_control_path, config.paths.epochs_control_path, config.epoching.control, config.hep.output_filename_control);
+
+%% Step 6: PC Group - EEG statistics in time domain (within-group)
 fprintf('Running step 6a: Running EEG statistics in time domain (within-group) with ica_status=%s\n', config.hep.ica_status);
 a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.stats.eeg.within_group, config.hep.output_filename_pc);
@@ -129,7 +148,7 @@ fprintf('Running step 6b: EEG PAC vs PVC comparison analysis with ica_status=%s\
 a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.stats.eeg.pac_vs_pvc, config.hep.output_filename_pc);
 
-%% Step 7: Run statistics in time domain for ECG channel
+%% Step 7: PC Group - ECG statistics in time domain (within-group)
 fprintf('Running step 7a: Running ECG statistics in time domain (within-group) with ica_status=%s\n', config.hep.ica_status);
 a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.stats.ecg.within_group, config.hep.output_filename_pc);
@@ -142,71 +161,46 @@ a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_pat
 fprintf('Running step 8a: Source space analysis - PVC -3 vs 0 (time window 0.22-0.35) [post-ICA]\n');
 a_8_source_analysis(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.source.pvc_m3_vs_0, ...
-    output_filename_pc_ica);
+    config.hep.output_filename_pc_ica);
 
 fprintf('Running step 8b: Source space analysis - PC -3 vs +1 (time window 0.13-0.2) [post-ICA]\n');
 a_8_source_analysis(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.source.pc_m3_vs_p1, ...
-    output_filename_pc_ica);
+    config.hep.output_filename_pc_ica);
 
 fprintf('Running step 8c: Time-resolved source space analysis - PC +1 vs -3 (sliding windows) [post-ICA]\n');
 a_9_source_analysis_timewise(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.source.timewise_pc_p1_vs_m3, ...
-    output_filename_pc_ica);
+    config.hep.output_filename_pc_ica);
 
 %% Step 9: Control Analysis - Cluster-Based Correlation (CFA)
 fprintf('Running step 9a: CFA cluster-based correlation analysis - PC +1 vs -3 [post-ICA]\n');
 a_9_cfa_cluster_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.cfa.cluster_pc_p1_vs_m3, output_filename_pc_ica);
+    config.paths.output_path, config.cfa.cluster_pc_p1_vs_m3, config.hep.output_filename_pc_ica);
 
 fprintf('Running step 9b: CFA cluster-based correlation analysis - PVC 0 vs -3 [post-ICA]\n');
 a_9_cfa_cluster_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.cfa.cluster_pvc_0_vs_m3, output_filename_pc_ica);
+    config.paths.output_path, config.cfa.cluster_pvc_0_vs_m3, config.hep.output_filename_pc_ica);
 
 %% Step 10: Control Analysis - Time Window Correlation (CFA)
-fprintf('Running step 10a: CFA time window correlation analysis - PC +1 vs -3 (tw: 0.12-0.2) [post-ICA]\n');% its 0.13-0.2 in the config
+fprintf('Running step 10a: CFA time window correlation analysis - PC +1 vs -3 (tw: 0.13-0.2) [post-ICA]\n');
 a_10_cfa_timewindow_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.cfa.timewindow_pc_p1_vs_m3, output_filename_pc_ica);
+    config.paths.output_path, config.cfa.timewindow_pc_p1_vs_m3, config.hep.output_filename_pc_ica);
 
 fprintf('Running step 10b: CFA time window correlation analysis - PVC 0 vs -3 (tw: 0.22-0.35) [post-ICA]\n');
 a_10_cfa_timewindow_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.cfa.timewindow_pvc_0_vs_m3, output_filename_pc_ica);
+    config.paths.output_path, config.cfa.timewindow_pvc_0_vs_m3, config.hep.output_filename_pc_ica);
 
 %% Step 11: Control Analysis - T-Wave Amplitude
 fprintf('Running step 11: Control analysis for T-Wave Amplitude Matching [post-ICA]\n');
 a_11_twave_control(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.twave.settings, output_filename_pc_ica);
+    config.paths.output_path, config.twave.settings, config.hep.output_filename_pc_ica);
 
-%% Step 12: Control Group - Complete Preprocessing and Statistics
-% I would probably put the control processing part also under the sections
-% where you have the PC processing, so that all a_1_preprocessing are under
-% %% Step 1 etc.
-
-fprintf('Running step 12a: Initial preprocessing of control data for ICA\n');
-a_1_preprocessing(config.paths.raw_control_data, config.paths.pre_ica_control_path, config.prepro.ica)
-
-fprintf('Running step 12b: Initial preprocessing of control analysis data\n');
-a_1_preprocessing(config.paths.raw_control_data, config.paths.no_ica_control_path, config.prepro.analysis)
-
-fprintf('Running step 12c: Detecting R-peaks for control ICA data\n');
-a_2b_detect_rpeaks_control(config.paths.pre_ica_control_path, config.paths.pre_ica_control_path, config.rpeak_detection)
-
-fprintf('Running step 12d: Detecting R-peaks for control analysis data (no_ica)\n');
-a_2b_detect_rpeaks_control(config.paths.no_ica_control_path, config.paths.no_ica_control_path, config.rpeak_detection)
-
-fprintf('Running step 12e: Running ICA and removing components for control subjects\n');
-a_3_run_ICA(config.paths.no_ica_control_path, config.paths.pre_ica_control_path, config.paths.post_ica_control_path, config.ica_cleaning)
-
-fprintf('Running step 12f: Reintegrate ECG channel for control subjects (ICA-corrected)\n');
-a_4_reintegrate_ecg(config.paths.post_ica_control_path, config.paths.error_log_path);
-
-fprintf('Running step 12g: Epoching for HEP analysis for control subjects\n');
-a_5_epoch_timedomain(config.paths.post_ica_control_path, config.paths.epochs_control_path, config.epoching.control, config.hep.output_filename_control);
-
-fprintf('Running step 12h: EEG PC vs Control comparison analysis (both post-ICA)\n');
+%% Step 12: Between-Group Comparison - PC vs Control
+fprintf('Running step 12a: EEG PC vs Control comparison analysis (both post-ICA)\n');
 a_6_stats_timedomain_EEG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.eeg.pc_vs_control, output_filename_pc_ica, config.paths.epochs_control_path);
+    config.paths.output_path, config.stats.eeg.pc_vs_control, config.hep.output_filename_pc_ica, config.paths.epochs_control_path);
 
-fprintf('Running step 12i: ECG PC vs Control comparison analysis (both post-ICA)\n');
+fprintf('Running step 12b: ECG PC vs Control comparison analysis (both post-ICA)\n');
 a_7_stats_timedomain_ECG(config.paths.epochs_pc_path, config.paths.error_log_path, ...
-    config.paths.output_path, config.stats.ecg.pc_vs_control, output_filename_pc_ica, config.paths.epochs_control_path);
+    config.paths.output_path, config.stats.ecg.pc_vs_control, config.hep.output_filename_pc_ica, config.paths.epochs_control_path);

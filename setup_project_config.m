@@ -93,7 +93,10 @@ function config = setup_project_config()
     %% HEP analysis parameters
     config.hep.epoch_length = [-200, 800]; % in ms
     config.hep.baseline_time = [-150, -50]; % in ms
-    config.hep.baseline_option = 'ref'; % 'no', 'ref', 'int' %its not very clear what these options refer to. perhaps you could clarify? 
+    config.hep.baseline_option = 'ref'; 
+    % 'no' (no baseline subtraction applied), 
+    % 'ref' (baseline timewindow from PC-3 beat (condition of REFerence)), 
+    % 'int' (prestimulus (condition of INTerest) baseline timewindow)
     config.hep.ica_status = 'post'; % 'no', 'post' (choose ICA correction level)
 
     %% Dynamic output filename helper and generated filenames
@@ -101,6 +104,8 @@ function config = setup_project_config()
 
     % Pre-generated filenames for current analysis
     config.hep.output_filename_pc = config.hep.get_output_filename('PC', config.hep.baseline_option, config.hep.ica_status);
+    config.hep.output_filename_pc_ica = config.hep.get_output_filename('PC', config.hep.baseline_option, 'post');
+    config.hep.output_filename_pc_no_ica = config.hep.get_output_filename('PC', config.hep.baseline_option, 'no');
     config.hep.output_filename_control = config.hep.get_output_filename('control', config.hep.baseline_option, config.hep.ica_status);
 
     %% Preprocessing configuration structures
