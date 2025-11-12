@@ -160,6 +160,8 @@ function a_8_source_analysis(epochs_path, error_log_path, output_path, source_co
                     hep_roi_indices, roi_signflip, time_window, agg_method);
 
                 %% Statistical testing
+                %hmhm this feels circular. 
+                % If the time window you are using is based on a statistical test on sensor level, I dont think you can do stats again in source space for the same conditions. 
                 [~, p_values, ~, ~] = ttest(source_comparison_ROI, source_reference_ROI, ...
                     'Dim', 2, 'Alpha', statistical_alpha, 'Tail', 'both');
 

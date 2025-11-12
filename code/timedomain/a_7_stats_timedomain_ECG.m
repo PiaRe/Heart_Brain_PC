@@ -113,6 +113,7 @@ function [is_significant] = a_7_stats_timedomain_ECG(epochs_path, error_log_path
             beat_type = group_select;
 
             %% TEMPORARY FIX: Auto-correct amplitude scaling for control subjects
+            %have you tried this on the ECG data? I wonder if it can mess up real "normal" ecgs, because amplitudes can go above 1mV without scaling confusion
             % This section checks if control subjects have abnormally high amplitudes
             % (>1000 µV) and divides them by 1000 to correct scaling issues.
             % Comment out this entire section once the issue is permanently fixed.

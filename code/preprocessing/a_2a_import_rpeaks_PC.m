@@ -13,8 +13,8 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
     %
     % Inputs:
     %   preprocessed_data_path - Path to directory containing preprocessed EEG .set files (string)
-    %   output_path           - Path to directory for saving processed files (string)
-    %   import_config         - Structure containing import configuration:
+    %   output_path            - Path to directory for saving processed files (string)
+    %   import_config          - Structure containing import configuration:
     %       .event_data_path       - Path to ECG event .txt files
     %       .error_log_path        - Path for saving error logs
     %       .raw_file_labels       - Beat types as they appear in raw table
@@ -59,12 +59,12 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
                 header = {'latency', 'duration', 'type', 'urevent', 'code'};
 
                 % Read event data
-                A = readtable(str);
-                data = cell(size(A, 1), size(header, 2));
+                eventFile = readtable(str);
+                data = cell(size(eventFile, 1), size(header, 2));
                 eventBeat = cell2table(data);
                 eventBeat.Properties.VariableNames = header;
-                eventBeat.latency = (A{:, 1} - 1) .* 2;
-                eventBeat.type = A{:, 3};
+                eventBeat.latency = (eventFile{:, 1} - 1) .* 2;
+                eventBeat.type = eventFile{:, 3};
                 eventBeat.code = repmat({'ECG'}, size(eventBeat.type));
 
                 % Mark invalid beats as badECG
@@ -81,7 +81,7 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
 
                     for j = 1:size(eventBeat.type, 1)
 
-                        if any(eventBeat{j, 'latency'} >= (EEG.rejData(:, 1) - 1) * 2 & ...
+                        if any(eventBeat{j, 'latency'} >= (EEG.rejData(:, 1) - 1) * 2 & ... %*2 because of sampling rate differnces?
                                 eventBeat{j, 'latency'} <= (EEG.rejData(:, 2) - 1) * 2) && ...
                                 any(strcmp(eventBeat{j, 'type'}, raw_file_labels))
                             eventBeat{j, 'type'} = {'badECG'};

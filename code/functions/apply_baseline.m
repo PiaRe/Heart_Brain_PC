@@ -16,7 +16,7 @@ function data_with_bsl = apply_baseline(bsl, data)
     data_with_bsl = data;
 
     for itrial = 1:size(data.trial, 2)
-        data_with_bsl.trial{itrial} = data.trial{itrial} - bsl{itrial};
+        data_with_bsl.trial{itrial} = data.trial{itrial} - bsl{itrial}; % probably not necessary, but would a check for equal sizes make sense? 
     end
 
 end

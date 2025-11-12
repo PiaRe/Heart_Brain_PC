@@ -32,7 +32,7 @@ function [comparison_label, reference_label] = create_condition_labels(beat_comp
     end
 
     % Function to format beat label based on beat type and group
-    function label = format_beat_label(beat_str, group)
+    function label = format_beat_label(beat_str, group) %this you have as a standalone function which could be removed
         % Convert string to allow comparison
         beat_str = char(beat_str);
 

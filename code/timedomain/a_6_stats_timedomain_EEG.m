@@ -5,7 +5,7 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
     % in the time domain using cluster-based permutation testing.
     %
     % Inputs:
-    %   epochs_path         - Path to epoched data files (PC group or main data)
+    %   epochs_path         - Path to epoched data files (PC group or main data) % I guess you can leave out the part in brackets, since you also use it for other data combinations, no?
     %   error_log_path     - Path for error logging
     %   output_path        - Path for saving results
     %   stats_config       - Statistics configuration structure (config.stats)
@@ -90,7 +90,7 @@ function [is_significant] = a_6_stats_timedomain_EEG(epochs_path, error_log_path
         end
 
         % Select group data based on configuration
-        % Note: allsubj_PC.PC contains combined PAC+PVC data from a_4_epoch_timedomain
+        % Note: allsubj_PC.PC contains combined PAC+PVC data from a_5_epoch_timedomain
 
         if is_pac_pvc_comparison
             % PAC vs PVC comparison: compare same beat type between PAC and PVC groups

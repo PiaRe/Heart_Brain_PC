@@ -145,6 +145,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
             % Store in output cells
             fisher_z_empirical{subj} = fisher_z_emp_temp;
             fisher_z_chance{subj} = fisher_z_cha_temp;
+            % really not critical, but you could save the outputs so that you don't have to recompute them
         end
 
         %% Statistical comparison: empirical vs chance
@@ -194,7 +195,7 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
         cfg.layout = layout;
         cfg.channel = {'all', '-ECG'};
         cfg.graphcolor = [[0, 0.4470, 0.7410]; [0.8500, 0.3250, 0.0980]];
-        cfg.linewidth = 1;
+        cfg.linewidth = 1; % for the other multiplots you use linewidth = 2, I guess it makes sense to stick to one so the figures appear "orderly"
         cfg.maskparameter = 'mask';
         cfg.maskstyle = 'box';
         cfg.maskfacealpha = 0.5;

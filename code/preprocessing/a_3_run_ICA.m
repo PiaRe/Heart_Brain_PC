@@ -83,6 +83,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
 
             %% Remove ECG channel if present in EEG data
             % Check if ECG channel exists in EEG_ICA and remove it
+            %in theory this should not happen, no?
             ecg_chan_idx_ica = find(strcmp({EEG_ICA.chanlocs.labels}, 'ECG') | strcmp({EEG_ICA.chanlocs.labels}, 'EKG'));
 
             if ~isempty(ecg_chan_idx_ica)
@@ -99,7 +100,7 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             end
 
             %% Create ECG template before epoching
-            all_analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}];
+            all_analysis_beat_types = [analysis_beat_types; {'iN'}; {'N'}]; %this could go to the config file
 
             % Epoch ECG data to create template
             % EEG_ICA.ECG.event = EEG_ICA.event; % Copy events before epoching
@@ -139,7 +140,9 @@ function a_3_run_ICA(no_ica_path, pre_ica_path, post_ica_path, ica_config)
             EEG.icaweights = EEG_ICA.icaweights;
             EEG.icachansind = EEG_ICA.icachansind;
             EEG.etc = EEG_ICA.etc;
+
             eeg_checkset(EEG);
+            
             EEG.icaact = (EEG.icaweights * EEG.icasphere) * EEG.data(EEG.icachansind, :);
 
             %% Heart Components

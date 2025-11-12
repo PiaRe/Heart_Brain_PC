@@ -88,10 +88,10 @@ eeglab; close;
 
 %% Step 1: Initial preprocessing
 fprintf('Running step 1a: Initial preprocessing of PC data for ICA');
-a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica);
+a_1_preprocessing(config.paths.raw_pc_data, config.paths.pre_ica_pc_path, config.prepro.ica); 
 
 fprintf('Running step 1b: Initial preprocessing of PC analysis data');
-a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis);
+a_1_preprocessing(config.paths.raw_pc_data, config.paths.no_ica_pc_path, config.prepro.analysis); 
 
 %% Step 2: Import events (timepoints of R-peaks)
 fprintf('Running step 2a: Importing ECG events and beats for PC ICA data');
@@ -113,7 +113,7 @@ a_4_reintegrate_ecg(config.paths.no_ica_pc_path, config.paths.error_log_path);
 
 %% Step 5: Epoch data for time domain HEP analysis
 fprintf('Running step 5a: Epoching for HEP analysis for PC subjects (ICA-corrected)\n');
-output_filename_pc_ica = config.hep.get_output_filename('PC', config.hep.baseline_option, 'post');
+output_filename_pc_ica = config.hep.get_output_filename('PC', config.hep.baseline_option, 'post'); % this could go to config, you also generate other filenames there
 a_5_epoch_timedomain(config.paths.post_ica_pc_path, config.paths.epochs_pc_path, config.epoching.pc, output_filename_pc_ica);
 
 fprintf('Running step 5b: Epoching for HEP analysis for PC subjects (data not ICA corrected)\n');
@@ -164,7 +164,7 @@ a_9_cfa_cluster_correlation(config.paths.epochs_pc_path, config.paths.error_log_
     config.paths.output_path, config.cfa.cluster_pvc_0_vs_m3, output_filename_pc_ica);
 
 %% Step 10: Control Analysis - Time Window Correlation (CFA)
-fprintf('Running step 10a: CFA time window correlation analysis - PC +1 vs -3 (tw: 0.12-0.2) [post-ICA]\n');
+fprintf('Running step 10a: CFA time window correlation analysis - PC +1 vs -3 (tw: 0.12-0.2) [post-ICA]\n');% its 0.13-0.2 in the config
 a_10_cfa_timewindow_correlation(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.cfa.timewindow_pc_p1_vs_m3, output_filename_pc_ica);
 
@@ -178,6 +178,9 @@ a_11_twave_control(config.paths.epochs_pc_path, config.paths.error_log_path, ...
     config.paths.output_path, config.twave.settings, output_filename_pc_ica);
 
 %% Step 12: Control Group - Complete Preprocessing and Statistics
+% I would probably put the control processing part also under the sections
+% where you have the PC processing, so that all a_1_preprocessing are under
+% %% Step 1 etc.
 
 fprintf('Running step 12a: Initial preprocessing of control data for ICA\n');
 a_1_preprocessing(config.paths.raw_control_data, config.paths.pre_ica_control_path, config.prepro.ica)
