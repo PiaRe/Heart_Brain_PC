@@ -93,7 +93,7 @@ function config = setup_project_config()
     %% HEP analysis parameters
     config.hep.epoch_length = [-200, 800]; % in ms
     config.hep.baseline_time = [-150, -50]; % in ms
-    config.hep.baseline_option = 'ref'; % 'no', 'ref', 'int'
+    config.hep.baseline_option = 'ref'; % 'no', 'ref', 'int' %its not very clear what these options refer to. perhaps you could clarify? 
     config.hep.ica_status = 'post'; % 'no', 'post' (choose ICA correction level)
 
     %% Dynamic output filename helper and generated filenames
@@ -254,7 +254,7 @@ function config = setup_project_config()
     config.source.pvc_m3_vs_0.beat_comparison = '0'; % PVC itself
     config.source.pvc_m3_vs_0.beat_reference = '-3'; % PVC-3
     config.source.pvc_m3_vs_0.group_select = 'PVC';
-    config.source.pvc_m3_vs_0.time_window = [0.220, 0.350];
+    config.source.pvc_m3_vs_0.time_window = [0.220, 0.350]; %I think i commented this somewhere else, but you could extract these time windows from the stats output 
 
     % Configuration 2: PC -3 vs +1 in time window 0.13-0.2
     config.source.pc_m3_vs_p1 = config.source.base;
