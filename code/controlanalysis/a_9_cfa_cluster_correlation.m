@@ -145,7 +145,6 @@ function a_9_cfa_cluster_correlation(epochs_path, error_log_path, output_path, c
             % Store in output cells
             fisher_z_empirical{subj} = fisher_z_emp_temp;
             fisher_z_chance{subj} = fisher_z_cha_temp;
-            % really not critical, but you could save the outputs so that you don't have to recompute them
         end
 
         %% Statistical comparison: empirical vs chance

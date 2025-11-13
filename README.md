@@ -156,7 +156,7 @@ Same statistical framework as Step 6, but for ECG channel to verify cardiac chan
 - PAC+PVC: PC+1 vs PC-3 (time window: 130-200 ms)
 
 #### Step 8c: Time-Resolved Source Analysis
-**Script:** `code/sourcespace/a_9_source_analysis_timewise.m`
+**Script:** `code/sourcespace/a_8c_source_analysis_timewise.m`
 
 Sliding time window analysis to compare PC+1 with PC-3.
 

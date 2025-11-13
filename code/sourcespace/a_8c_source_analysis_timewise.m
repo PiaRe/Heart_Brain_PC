@@ -1,5 +1,5 @@
-function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, source_config, input_filename)
-    % A_9_SOURCE_ANALYSIS_TIMEWISE - Time-resolved eLORETA source reconstruction
+function a_8c_source_analysis_timewise(epochs_path, error_log_path, output_path, source_config, input_filename)
+    % A_8C_SOURCE_ANALYSIS_TIMEWISE - Time-resolved eLORETA source reconstruction
     %
     % This function performs eLORETA-based source reconstruction comparing
     % PC+1 (fixed time window) against PC-3 across multiple sliding time windows.
@@ -285,7 +285,7 @@ function a_9_source_analysis_timewise(epochs_path, error_log_path, output_path, 
 
     catch ME
         %% Error handling
-        error_msg = sprintf('Error in a_9_source_analysis_timewise: %s\n%s', ME.message, getReport(ME));
+        error_msg = sprintf('Error in a_8c_source_analysis_timewise: %s\n%s', ME.message, getReport(ME));
         fprintf(2, '%s\n', error_msg);
 
         % Log error
