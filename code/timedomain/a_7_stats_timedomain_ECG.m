@@ -6,7 +6,7 @@ function [is_significant] = a_7_stats_timedomain_ECG(epochs_path, error_log_path
     % Unlike a_5_stats_timedomain_EEG, this focuses solely on the ECG channel.
     %
     % Inputs:
-    %   epochs_path         - Path to epoched data files (PC group or main data)
+    %   epochs_path        - Path to epoched data files
     %   error_log_path     - Path for error logging
     %   output_path        - Path for saving results
     %   stats_config       - Statistics configuration structure (config.stats)
@@ -111,51 +111,6 @@ function [is_significant] = a_7_stats_timedomain_ECG(epochs_path, error_log_path
             control_group_data = allsubj_control.(group_select);
             reference_data = control_group_data.(beat_reference_field);
             beat_type = group_select;
-
-            %% TEMPORARY FIX: Auto-correct amplitude scaling for control subjects
-            %have you tried this on the ECG data? I wonder if it can mess up real "normal" ecgs, because amplitudes can go above 1mV without scaling confusion
-            % This section checks if control subjects have abnormally high amplitudes
-            % (>1000 µV) and divides them by 1000 to correct scaling issues.
-            % Comment out this entire section once the issue is permanently fixed.
-            fprintf('  Checking control group amplitudes for scaling issues...\n');
-
-            for subj_idx = 1:length(reference_data)
-
-                if ~isempty(reference_data{subj_idx})
-                    % Get EEG channels (exclude ECG)
-                    eeg_channels = find(~strcmp({reference_data{subj_idx}.label}, 'ECG'));
-
-                    if ~isempty(eeg_channels)
-                        % Check max amplitude in avg
-                        max_amp = max(max(abs(reference_data{subj_idx}.avg(eeg_channels, :))));
-
-                        if max_amp > 1000
-                            fprintf('    WARNING: Control subject %d has amplitude %.2f µV > 1000 µV\n', subj_idx, max_amp);
-                            fprintf('    Dividing by 1000 to correct scaling...\n');
-
-                            % Correct avg
-                            reference_data{subj_idx}.avg(eeg_channels, :) = ...
-                                reference_data{subj_idx}.avg(eeg_channels, :) / 1000;
-
-                            % Correct trial data if it exists
-                            if isfield(reference_data{subj_idx}, 'trial') && ~isempty(reference_data{subj_idx}.trial)
-                                reference_data{subj_idx}.trial(:, eeg_channels, :) = ...
-                                    reference_data{subj_idx}.trial(:, eeg_channels, :) / 1000;
-                            end
-
-                            % Verify correction
-                            new_max_amp = max(max(abs(reference_data{subj_idx}.avg(eeg_channels, :))));
-                            fprintf('    Corrected: New amplitude = %.2f µV\n', new_max_amp);
-                        end
-
-                    end
-
-                end
-
-            end
-
-            fprintf('  Amplitude check complete.\n');
-            %% END TEMPORARY FIX
 
         else
             % Within-subject comparison (e.g., -3 vs +1)
