@@ -38,7 +38,6 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
     flatline_criterion = prepro_config.flatline_criterion;
     eeg_channels = prepro_config.eeg_channels;
 
-    
     %% get files
     files = find_files_by_extension(raw_data_path, '*.vhdr');
 
@@ -53,7 +52,6 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
 
             % subject ID and name for saving
             subjid = extract_subject_id(files(i).name, '.vhdr');
-
 
             % if subject is already in prep - folder, skip it
             if any(strcmp(prepFileList, [subjid, '.set']))
@@ -80,7 +78,6 @@ function a_1_preprocessing(raw_data_path, preprocessed_data_path, prepro_config)
             EEG_temp = pop_eegfiltnew(EEG_temp, 'locutoff', low_cutoff, 'plotfreqz', 0);
 
             % Notch filter for EEG data
-            %you could add the cutoffs to the config istead of subtracting and adding 1 here
             nf_low_cu = line_noise_frequency - 1;
             nf_high_cu = line_noise_frequency + 1;
             EEG_temp = pop_eegfiltnew(EEG_temp, 'locutoff', nf_low_cu, 'hicutoff', nf_high_cu, 'revfilt', 1, 'plotfreqz', 0);

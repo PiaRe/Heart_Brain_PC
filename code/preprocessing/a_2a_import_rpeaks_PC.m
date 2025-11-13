@@ -81,7 +81,7 @@ function a_2a_import_rpeaks_PC(preprocessed_data_path, output_path, import_confi
 
                     for j = 1:size(eventBeat.type, 1)
 
-                        if any(eventBeat{j, 'latency'} >= (EEG.rejData(:, 1) - 1) * 2 & ... %*2 because of sampling rate differnces?
+                        if any(eventBeat{j, 'latency'} >= (EEG.rejData(:, 1) - 1) * 2 & ... %*2 because of sampling rate differnces
                                 eventBeat{j, 'latency'} <= (EEG.rejData(:, 2) - 1) * 2) && ...
                                 any(strcmp(eventBeat{j, 'type'}, raw_file_labels))
                             eventBeat{j, 'type'} = {'badECG'};

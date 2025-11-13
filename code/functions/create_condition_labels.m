@@ -31,32 +31,6 @@ function [comparison_label, reference_label] = create_condition_labels(beat_comp
         is_correlation_analysis = false;
     end
 
-    % Function to format beat label based on beat type and group
-    function label = format_beat_label(beat_str, group) %this you have as a standalone function which could be removed
-        % Convert string to allow comparison
-        beat_str = char(beat_str);
-
-        if strcmp(beat_str, 'iN')
-            % iN beats -> 'N'
-            label = 'N';
-        elseif strcmp(beat_str, '0')
-            % 0 beat -> group name (PAC, PVC, or PC)
-            label = group;
-        else
-            % Numeric offset: -3, -2, -1, 1, 2
-            % Convert to proper format with sign
-            offset = str2double(beat_str);
-
-            if offset > 0
-                label = [group, '+', num2str(offset)];
-            else
-                label = [group, num2str(offset)];
-            end
-
-        end
-
-    end
-
     % Generate labels based on comparison type
     if is_correlation_analysis
         % CFA Correlation analysis: special labels with Delta symbol

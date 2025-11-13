@@ -50,9 +50,7 @@ function [downsampled_data, was_downsampled, original_n_trials, final_n_trials] 
         subject_idx, original_n_trials, target_n_trials);
 
     % Randomly select trials
-    %you could set rng(1) or so to have the same randomness each time you
-    %run the script - so your results do not change 
-    rng('shuffle'); % Ensure randomness
+    rng(42); % Set seed
     selected_indices = randperm(original_n_trials, target_n_trials);
     selected_indices = sort(selected_indices); % Sort to maintain temporal order
 
