@@ -17,21 +17,36 @@ Very little is known about how the brain responds to PCs. We analyzed data from 
 Heart_Brain_PC/
 ├── README.md                          # This file
 ├── main_processing.m                  # Main analysis pipeline
-├── setup_project_config.m             # Central configuration file
-├── matching_PC2control.ipynb          # Python notebook for matching control group to PC group
+├── setup_project_config.m             # Central configuration file (template)
 ├── code/                              # Analysis scripts
-│   ├── preprocessing/                 # Step 1-4: Data preprocessing & ICA
-│   ├── timedomain/                    # Step 5-7: HEP time-domain analysis
-│   ├── sourcespace/                   # Step 8-9: Source reconstruction
-│   ├── controlanalysis/               # Step 9-11: Control analyses
+│   ├── preprocessing/                 # Steps 1-4: Data preprocessing & ICA
+│   ├── timedomain/                    # Steps 5-7: HEP time-domain analysis
+│   ├── sourcespace/                   # Step 8: Source reconstruction
+│   ├── controlanalysis/               # Steps 9-11: Control analyses
+│   │   └── matching_PC2control.ipynb  # Python notebook for matching control group to PC group
 │   ├── functions/                     # Helper functions
 │   └── logfiles/                      # Error logs (not in git)
 ├── data/                              # Data directories (not in git)
 │   ├── raw/                           # Raw EEG/ECG files
+│   │   ├── PC/                        # PC group data
+│   │   ├── control/                   # Control group data
+│   │   ├── crop_marker/               # Crop marker files (optional)
+│   │   └── event_marker/              # ECG event files with R-peaks (PC group only)
 │   ├── ICA/                           # ICA-processed files
+│   │   ├── no/                        # Non-ICA corrected data
+│   │   │   ├── PC/
+│   │   │   └── control/
+│   │   ├── pre/                       # Pre-ICA data (for ICA computation)
+│   │   │   ├── PC/
+│   │   │   └── control/
+│   │   └── post/                      # Post-ICA corrected data
+│   │       ├── PC/
+│   │       └── control/
 │   ├── epochs/                        # Epoched data
-│   ├── matching/                      # Data to match control group to PC group
-│   └── QA/                            # Quality assessment plots of ICA components and spektra
+│   │   ├── PC/                        # PC group epochs
+│   │   └── control/                   # Control group epochs
+│   ├── matching/                      # Data for matching control group to PC group
+│   └── QA/                            # Quality assessment plots of ICA components and spectra
 ├── precomputed/                       # Precomputed templates
 │   ├── cm17.mat                       # Colormap
 │   ├── layout.mat                     # Channel layout
@@ -62,7 +77,7 @@ Heart_Brain_PC/
 The analysis is organized in sequential steps. All steps are controlled through `main_processing.m` and configured via `setup_project_config.m`.
 
 ### Step 0: Subject Matching (Python)
-**Script:** `matching_PC2control.ipynb`
+**Script:** `code/controlanalysis/matching_PC2control.ipynb`
 
 Match healthy control subjects to PC subjects based on:
 - Age, BMI, blood pressure (when available)
@@ -71,10 +86,14 @@ Match healthy control subjects to PC subjects based on:
 
 **Method:** k-Nearest Neighbors with standardized features
 
-### Steps 1-5: Preprocessing & Epoching
+### Steps 1-5: Preprocessing & Epoching (PC and Control Groups)
+
+**Note:** All preprocessing steps (1-5) are performed for both PC and Control groups to ensure identical preprocessing pipelines.
 
 #### Step 1: Initial Preprocessing
 **Script:** `code/preprocessing/a_1_preprocessing.m`
+
+**Processes:** Both PC and Control groups
 
 - Load raw BrainVision EEG data (`.vhdr`, `.vmrk`, `.eeg`)
 - Apply crop markers to remove unwanted segments
@@ -88,18 +107,23 @@ Match healthy control subjects to PC subjects based on:
 
 #### Step 2: Import/Detect R-peaks
 **Scripts:** 
-- `code/preprocessing/a_2a_import_rpeaks_PC.m` (PC group - external ECG files detected with CER-S)
-- `code/preprocessing/a_2b_detect_rpeaks_control.m` (Control group - internal detection)
+- `code/preprocessing/a_2a_import_rpeaks_PC.m` (PC group - external ECG files)
+- `code/preprocessing/a_2b_detect_rpeaks_control.m` (Control group - internal detection from ECG channel)
 
-Import externally detected R-peak events and beat type labels:
+**PC Group:** Import externally detected R-peak events and beat type labels (detected with CER-S):
 - `N` = Normal beat
 - `S` = Supraventricular (PAC)
 - `V` = Ventricular (PVC)
 - Beat positions relative to PC: `-4, -3, -2, -1, iPAC/iPVC, +1, +2, +3, +4`
 - mark labels in noisy segments as `badECG`
 
+**Control Group:** Detect R-peaks directly from the ECG channel using HEPLAB's detection algorithm.
+- mark labels in noisy segments as `badECG`
+
 #### Step 3: ICA Cleaning
 **Script:** `code/preprocessing/a_3_run_ICA.m`
+
+**Processes:** Both PC and Control groups
 
 - Run extended Infomax ICA on epoched data
 - Automatically identify and remove artifact components:
@@ -112,10 +136,14 @@ Import externally detected R-peak events and beat type labels:
 #### Step 4: Reintegrate ECG Channel
 **Script:** `code/preprocessing/a_4_reintegrate_ecg.m`
 
+**Processes:** Both PC and Control groups
+
 Reintegrate the ECG channel into the EEG data.
 
 #### Step 5: Epoch Data
 **Script:** `code/timedomain/a_5_epoch_timedomain.m`
+
+**Processes:** Both PC and Control groups
 
 - Epoch EEG data around R-peaks: -200 to +800 ms
 - Subtract averaged iN from every PC-1 beat in continuous data for a clean PC beat
@@ -123,7 +151,11 @@ Reintegrate the ECG channel into the EEG data.
 - Average within beat types
 - Save epoched data for statistical analysis
 
-**Output:** `allsubj_timedomain_[group]_[baseline]_[ica].mat`
+**Outputs:** 
+- PC group: `allsubj_timedomain_PC_[baseline]_[ica].mat`
+- Control group: `allsubj_timedomain_control_[baseline]_[ica].mat`
+  - `[baseline]`: `no`, `ref`, or `int` (baseline correction option)
+  - `[ica]`: `no` or `post` (ICA correction status)
 
 ### Steps 6-7: Time-Domain Statistics
 
@@ -178,10 +210,12 @@ Control for potential cardiac field artifacts by correlating:
 
 Match PC+1 epochs with Normal/PC-3 epochs based on T-wave amplitude to control for T-wave morphology effects on HEP.
 
-### Step 12: Control Group Analysis
-**Script:** `a_1, a_2b, a_3, a_4, a_5, a_6, a_7`
+### Step 12: Between-Group Comparison - PC vs Control
+**Scripts:** `code/timedomain/a_6_stats_timedomain_EEG.m`, `code/timedomain/a_7_stats_timedomain_ECG.m`
 
-Preprocess control group data and compare iN beats of PC and control group. 
+Compare isolated normal (iN) beats between PC and Control groups to identify baseline differences in brain-heart coupling.
+
+**Note:** Control group undergoes the same preprocessing pipeline (Steps 1-5) as PC group to ensure comparable data quality. 
 
 ---
 
@@ -244,11 +278,10 @@ Create the following directories and populate with raw data:
 ```
 data/
 ├── raw/
-│   ├── PC/          # PC group EEG files
-│   └── control/     # Control group EEG files
-├── raw/
+│   ├── PC/              # PC group EEG files
+│   ├── control/         # Control group EEG files
 │   ├── crop_marker/     # Crop marker files (optional)
-│   └── event_marker/    # ECG event files with R-peaks
+│   └── event_marker/    # ECG event files with R-peaks (PC group only)
 └── matching/            # CSV files for subject matching
 ```
 
@@ -256,7 +289,7 @@ data/
 
 If creating a control group:
 ```bash
-jupyter notebook matching_PC2control.ipynb
+jupyter notebook code/controlanalysis/matching_PC2control.ipynb
 ```
 
 ### 4. Run Main Analysis Pipeline
