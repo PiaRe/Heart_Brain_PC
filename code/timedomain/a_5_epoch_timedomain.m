@@ -160,8 +160,8 @@ function a_5_epoch_timedomain(input_data_path, epoched_path, epoch_config, outpu
                 EEG = pop_loadset('filename', filename, 'filepath', input_data_path);
                 EEG = eeg_checkset(EEG);
 
-                % Create epochs for reference condition 
-                EEG_ref = pop_epoch(EEG, {current_reference_beat}, epoch_length / 1000, 'epochinfo', 'yes');  % Convert epoch length to seconds for pop_epoch
+                % Create epochs for reference condition
+                EEG_ref = pop_epoch(EEG, {current_reference_beat}, epoch_length / 1000, 'epochinfo', 'yes'); % Convert epoch length to seconds for pop_epoch
 
                 if EEG_ref.trials >= min_trials_required
                     EEG_ref = eeg_checkset(EEG_ref);
@@ -323,7 +323,7 @@ function a_5_epoch_timedomain(input_data_path, epoched_path, epoch_config, outpu
                         % otherwise zero for later subtraction from real EEG data
                         for event_idx = 1:nevents
 
-                            if ischar(EEG.event(event_idx).type) && strcmp(EEG.event(event_idx).type, preceding_beat_type) %I guess the ischar() check could be omitted, since you defin preceding_beat_type as char, no?
+                            if strcmp(EEG.event(event_idx).type, preceding_beat_type)
                                 latency_sample = EEG.event(event_idx).latency;
                                 start_sample = max(1, latency_sample + epoch_samples(1));
                                 end_sample = min(size(EEG.data, 2), latency_sample + epoch_samples(2));
