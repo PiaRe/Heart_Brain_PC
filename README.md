@@ -1,4 +1,4 @@
-# Neural Representation of Premature Heartbeats in Humans
+# Source Code of EEG Analysis to: Neural Signatures of Premature Heartbeats in Humans
 
 [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![MATLAB](https://img.shields.io/badge/MATLAB-R2020a+-orange.svg)](https://www.mathworks.com/products/matlab.html)
