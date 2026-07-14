@@ -9,7 +9,7 @@ The repository contains the code that accompanies this publication: [![DOI](http
 
 A regular and continuous heartbeat is essential for survival and is therefore closely monitored by the brain. Most people occasionally experience a temporary "stuttering" of the heartbeat, known as a **premature contraction (PC)**, which can originate in the atrium (**PAC** - Premature Atrial Contraction) or the ventricle (**PVC** - Premature Ventricular Contraction). 
 
-Very little is known about how the brain responds to PCs. We analyzed data from simultaneously recorded cardiac (electrocardiogram - ECG) and neural (electroencephalography - EEG) activity during **3065 premature contractions** in **103 participants** (51 with PAC, 52 with PVC) and a matched control group. This repository contains the complete analysis pipeline code that accompanies our publication.
+Very little is known about how the brain responds to PCs. We analyzed data from simultaneously recorded cardiac (electrocardiogram - ECG) and neural (electroencephalography - EEG) activity during **3065 premature contractions** in **103 participants** (51 with PAC, 52 with PVC) and a matched control group. This repository contains the complete EEG analysis pipeline code that accompanies our publication.
 
 ## Repository Structure
 
